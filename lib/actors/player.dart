@@ -1,13 +1,16 @@
 import 'dart:async';
 
 import 'package:flame/components.dart';
+import 'package:flame/extensions.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flutter/services.dart';
 
 enum PlayerState {
   idle,
   walk,
-  attack;
+  attack1,
+  attack2,
+  attack3;
 }
 
 final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameRef<NanoRpgGame>, KeyboardHandler {
@@ -38,8 +41,28 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
     ),
   );
 
-  late final attackAnimation = SpriteAnimation.fromFrameData(
+  late final attackAnimation1 = SpriteAnimation.fromFrameData(
     game.images.fromCache('player/warrior_1/attack_1.png'),
+    SpriteAnimationData.sequenced(
+      amount: 4,
+      stepTime: .2,
+      textureSize: Vector2.all(96),
+      loop: false,
+    ),
+  );
+
+  late final attackAnimation2 = SpriteAnimation.fromFrameData(
+    game.images.fromCache('player/warrior_1/attack_2.png'),
+    SpriteAnimationData.sequenced(
+      amount: 4,
+      stepTime: .2,
+      textureSize: Vector2.all(96),
+      loop: false,
+    ),
+  );
+
+  late final attackAnimation3 = SpriteAnimation.fromFrameData(
+    game.images.fromCache('player/warrior_1/attack_3.png'),
     SpriteAnimationData.sequenced(
       amount: 4,
       stepTime: .2,
@@ -53,17 +76,29 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
   Vector2 velocity = Vector2.zero();
 
   bool isAttacking = false;
+  bool attackingInProgress = false;
 
   @override
   FutureOr<void> onLoad() {
     animations = {
       PlayerState.idle: idleAnimation,
       PlayerState.walk: walkAnimation,
-      PlayerState.attack: attackAnimation,
+      PlayerState.attack1: attackAnimation1,
+      PlayerState.attack2: attackAnimation2,
+      PlayerState.attack3: attackAnimation3,
     };
 
-    animationTickers?[PlayerState.attack]?.onComplete = () {
+    animationTickers?[PlayerState.attack1]?.onComplete = () {
       isAttacking = false;
+      attackingInProgress = false;
+    };
+    animationTickers?[PlayerState.attack2]?.onComplete = () {
+      isAttacking = false;
+      attackingInProgress = false;
+    };
+    animationTickers?[PlayerState.attack3]?.onComplete = () {
+      isAttacking = false;
+      attackingInProgress = false;
     };
 
     return super.onLoad();
@@ -80,8 +115,12 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
       flipHorizontally();
     }
 
+    // Update animation state
     if (isAttacking) {
-      current = PlayerState.attack;
+      if (!attackingInProgress) {
+        current = [PlayerState.attack1, PlayerState.attack2, PlayerState.attack3].random();
+        attackingInProgress = true;
+      }
     } else {
       if (velocity.isZero()) {
         current = PlayerState.idle;

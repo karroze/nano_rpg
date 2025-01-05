@@ -26,6 +26,8 @@ final class NanoRpgGame extends FlameGame with CollisionCallbacks, HasKeyboardHa
         'player/warrior_1/idle.png',
         'player/warrior_1/walk.png',
         'player/warrior_1/attack_1.png',
+        'player/warrior_1/attack_2.png',
+        'player/warrior_1/attack_3.png',
         'enemies/orc_berserk/idle.png',
         'enemies/orc_berserk/walk.png',
         'enemies/orc_berserk/attack_1.png',
