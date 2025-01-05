@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
@@ -13,7 +14,8 @@ enum PlayerState {
   attack3;
 }
 
-final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameRef<NanoRpgGame>, KeyboardHandler {
+final class Player extends SpriteAnimationGroupComponent<PlayerState>
+    with HasGameRef<NanoRpgGame>, KeyboardHandler, CollisionCallbacks {
   Player({
     required super.position,
   }) : super(
@@ -71,8 +73,6 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
     ),
   );
 
-  int health = 100;
-  int stamina = 100;
   Vector2 velocity = Vector2.zero();
 
   bool isAttacking = false;
@@ -80,6 +80,7 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
 
   @override
   FutureOr<void> onLoad() {
+    // Map states to animations
     animations = {
       PlayerState.idle: idleAnimation,
       PlayerState.walk: walkAnimation,
@@ -88,6 +89,7 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
       PlayerState.attack3: attackAnimation3,
     };
 
+    // Set attack animations tickers
     animationTickers?[PlayerState.attack1]?.onComplete = () {
       isAttacking = false;
       attackingInProgress = false;
@@ -100,6 +102,9 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
       isAttacking = false;
       attackingInProgress = false;
     };
+
+    // Add hitbox
+    add(RectangleHitbox());
 
     return super.onLoad();
   }
@@ -134,14 +139,22 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
 
   @override
   bool onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
+    velocity = Vector2.zero();
     // Check for jump
     // hasJumped = keysPressed.contains(LogicalKeyboardKey.space);
     // Check for attack if there is no attack in progress
     if (!isAttacking) {
       isAttacking = keysPressed.contains(LogicalKeyboardKey.keyE);
-      // Check for movement
-      velocity = Vector2.zero();
-      if (!isAttacking) {
+      if (isAttacking) {
+        final hasEnoughStamina = game.playerStamina >= game.playerStaminaPerHit;
+        if (hasEnoughStamina) {
+          game.playerStamina -= game.playerStaminaPerHit;
+        }
+        else {
+          isAttacking = false;
+        }
+      } else {
+        // Check for movement
         final double diffX = switch (keysPressed) {
           final Set<LogicalKeyboardKey> keys
               when keys.contains(LogicalKeyboardKey.keyA) || keys.contains(LogicalKeyboardKey.arrowLeft) =>

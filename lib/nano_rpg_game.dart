@@ -1,13 +1,23 @@
 import 'dart:async';
 
-import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame_nano_rpg/actors/player.dart';
 import 'package:flame_nano_rpg/overlays/hud.dart';
 
-final class NanoRpgGame extends FlameGame with CollisionCallbacks, HasKeyboardHandlerComponents {
+final class NanoRpgGame extends FlameGame with HasCollisionDetection, HasKeyboardHandlerComponents {
+  final playerMaxHealth = 100;
+  final playerMaxStamina = 100;
+
+  final playerStaminaPerHit = 25;
+  final playerStaminaRegenPerTimeframe = 10;
+
+  late int playerHealth = playerMaxHealth;
+  late int playerStamina = playerMaxStamina;
+
+  double staminaRegenTime = 1;
+
   @override
   FutureOr<void> onLoad() async {
     await _loadAssets();
@@ -36,6 +46,18 @@ final class NanoRpgGame extends FlameGame with CollisionCallbacks, HasKeyboardHa
         'trees/tree/tree_3.png',
       ],
     );
+  }
+
+
+  @override
+  void update(double dt) {
+    staminaRegenTime -= dt;
+    if(staminaRegenTime <= 0 && playerStamina < playerMaxStamina) {
+      staminaRegenTime = 1;
+      playerStamina += playerStaminaRegenPerTimeframe;
+      playerStamina = playerStamina.clamp(0, playerMaxStamina);
+    }
+    super.update(dt);
   }
 
   FutureOr<void> _loadPlayer() async {

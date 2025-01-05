@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:flame/components.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
+import 'package:flame_nano_rpg/overlays/health_bar.dart';
+import 'package:flame_nano_rpg/overlays/progress_bar.dart';
+import 'package:flame_nano_rpg/overlays/stamina_bar.dart';
 import 'package:flutter/material.dart';
 
 final class Hud extends PositionComponent with HasGameRef<NanoRpgGame> {
@@ -43,6 +46,18 @@ final class Hud extends PositionComponent with HasGameRef<NanoRpgGame> {
     //     ),
     //   ),
     // );
+
+    add(
+      HealthBar(
+        position: Vector2(game.size.x - 250, 20),
+      ),
+    );
+
+    add(
+      StaminaBar(
+        position: Vector2(game.size.x - 250, 45),
+      ),
+    );
 
     add(
       FpsTextComponent(
