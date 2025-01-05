@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
+import 'package:flame_nano_rpg/actors/enemy.dart';
 import 'package:flame_nano_rpg/actors/player.dart';
 import 'package:flame_nano_rpg/overlays/hud.dart';
 
@@ -22,6 +23,7 @@ final class NanoRpgGame extends FlameGame with HasCollisionDetection, HasKeyboar
   FutureOr<void> onLoad() async {
     await _loadAssets();
     await _loadPlayer();
+    await _loadEnemies();
 
     camera.viewfinder.anchor = Anchor.topLeft;
     camera.viewport.add(Hud());
@@ -41,6 +43,8 @@ final class NanoRpgGame extends FlameGame with HasCollisionDetection, HasKeyboar
         'enemies/orc_berserk/idle.png',
         'enemies/orc_berserk/walk.png',
         'enemies/orc_berserk/attack_1.png',
+        'enemies/orc_berserk/dead.png',
+        'enemies/orc_berserk/hurt.png',
         'trees/tree/tree_1.png',
         'trees/tree/tree_2.png',
         'trees/tree/tree_3.png',
@@ -48,11 +52,10 @@ final class NanoRpgGame extends FlameGame with HasCollisionDetection, HasKeyboar
     );
   }
 
-
   @override
   void update(double dt) {
     staminaRegenTime -= dt;
-    if(staminaRegenTime <= 0 && playerStamina < playerMaxStamina) {
+    if (staminaRegenTime <= 0 && playerStamina < playerMaxStamina) {
       staminaRegenTime = 1;
       playerStamina += playerStaminaRegenPerTimeframe;
       playerStamina = playerStamina.clamp(0, playerMaxStamina);
@@ -64,6 +67,14 @@ final class NanoRpgGame extends FlameGame with HasCollisionDetection, HasKeyboar
     add(
       Player(
         position: size / 2,
+      ),
+    );
+  }
+
+  FutureOr<void> _loadEnemies() async {
+    add(
+      Enemy(
+        position: size / 2 + Vector2(150, 0),
       ),
     );
   }

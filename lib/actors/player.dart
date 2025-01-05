@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/extensions.dart';
+import 'package:flame_nano_rpg/actors/enemy.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flutter/services.dart';
 
@@ -73,7 +74,11 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
     ),
   );
 
+  final int damage = 25;
+
   Vector2 velocity = Vector2.zero();
+
+  PositionComponent? target;
 
   bool isAttacking = false;
   bool attackingInProgress = false;
@@ -149,6 +154,12 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
         final hasEnoughStamina = game.playerStamina >= game.playerStaminaPerHit;
         if (hasEnoughStamina) {
           game.playerStamina -= game.playerStaminaPerHit;
+          if(target is Enemy) {
+            (target! as Enemy).receiveDamage(
+              damage: damage,
+              targetScale: scale,
+            );
+          }
         }
         else {
           isAttacking = false;
@@ -177,5 +188,14 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
       }
     }
     return super.onKeyEvent(event, keysPressed);
+  }
+
+  @override
+  void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
+    if(other is Enemy) {
+      target = other;
+      other.lookAtTarget(scale);
+    }
+    super.onCollision(intersectionPoints, other);
   }
 }
