@@ -18,5 +18,6 @@ dev_dependencies:
 flutter:
   assets:
     - assets/images/
+    - assets/images/player/warrior_1/
     - assets/images/enemies/orc_berserk/
     - assets/images/trees/tree/
