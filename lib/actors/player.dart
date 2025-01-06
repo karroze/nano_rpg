@@ -77,7 +77,7 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
 
   final int damage = 25;
 
-  Vector2 velocity = Vector2.zero();
+  final velocity = Vector2.zero();
 
   bool isAttacking = false;
   bool attackingInProgress = false;
@@ -159,7 +159,7 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
 
   @override
   bool onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
-    print('KeyEvent: ${event.logicalKey.keyLabel}');
+    // print('KeyEvent: ${event.logicalKey.keyLabel}');
     // print('KEys: ${keysPressed.map((i) => '${i.keyLabel}\t').toList()}');
 
     // Check for jump
@@ -197,6 +197,7 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
       // If not, set attacking to false and do nothing
       if (!hasEnoughStamina) {
         isAttacking = false;
+        attackingInProgress = false;
         return true;
       }
 

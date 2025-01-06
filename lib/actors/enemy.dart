@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:meta/meta.dart';
+
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
@@ -15,67 +17,29 @@ enum EnemyState {
   die;
 }
 
-final class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasGameRef<NanoRpgGame>, KeyboardHandler, CollisionCallbacks {
+abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasGameRef<NanoRpgGame>, KeyboardHandler, CollisionCallbacks {
   Enemy({
     required super.position,
+    required super.size,
   }) : super(
-          size: Vector2(96, 96),
           anchor: Anchor.center,
         );
 
-  static const double moveSpeed = 50;
+  @mustBeOverridden
+  double get moveSpeed;
 
-  late final idleAnimation = SpriteAnimation.fromFrameData(
-    game.images.fromCache('enemies/orc_berserk/idle.png'),
-    SpriteAnimationData.sequenced(
-      amount: 5,
-      stepTime: .2,
-      textureSize: Vector2.all(96),
-    ),
-  );
+  @mustBeOverridden
+  int get maxHealth;
 
-  late final walkAnimation = SpriteAnimation.fromFrameData(
-    game.images.fromCache('enemies/orc_berserk/walk.png'),
-    SpriteAnimationData.sequenced(
-      amount: 7,
-      stepTime: .2,
-      textureSize: Vector2.all(96),
-    ),
-  );
+  Vector2 get hitboxSize => Vector2(68, 64);
 
-  late final attackAnimation1 = SpriteAnimation.fromFrameData(
-    game.images.fromCache('enemies/orc_berserk/attack_1.png'),
-    SpriteAnimationData.sequenced(
-      amount: 4,
-      stepTime: .2,
-      textureSize: Vector2.all(96),
-      loop: false,
-    ),
-  );
+  late final SpriteAnimation idleAnimation;
+  late final SpriteAnimation walkAnimation;
+  late final SpriteAnimation attackAnimation;
+  late final SpriteAnimation hurtAnimation;
+  late final SpriteAnimation dieAnimation;
 
-  late final dieAnimation = SpriteAnimation.fromFrameData(
-    game.images.fromCache('enemies/orc_berserk/dead.png'),
-    SpriteAnimationData.sequenced(
-      amount: 4,
-      stepTime: .2,
-      textureSize: Vector2.all(96),
-      loop: false,
-    ),
-  );
-
-  late final hurtAnimation = SpriteAnimation.fromFrameData(
-    game.images.fromCache('enemies/orc_berserk/hurt.png'),
-    SpriteAnimationData.sequenced(
-      amount: 2,
-      stepTime: .2,
-      textureSize: Vector2.all(96),
-      loop: false,
-    ),
-  );
-
-  Vector2 velocity = Vector2.zero();
-
-  final int maxHealth = 100;
+  late final velocity = Vector2.zero();
   late int health = maxHealth;
 
   bool isAttacking = false;
@@ -90,7 +54,7 @@ final class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasGame
     animations = {
       EnemyState.idle: idleAnimation,
       EnemyState.walk: walkAnimation,
-      EnemyState.attack: attackAnimation1,
+      EnemyState.attack: attackAnimation,
       EnemyState.hurt: hurtAnimation,
       EnemyState.die: dieAnimation,
       // PlayerState.attack2: attackAnimation2,
@@ -140,7 +104,7 @@ final class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasGame
     // Add hitbox
     add(
       RectangleHitbox(
-        size: Vector2(68, 64),
+        size: hitboxSize,
         position: Vector2(
           size.x / 2,
           size.y,

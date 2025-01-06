@@ -14,10 +14,13 @@ dependencies:
 
 dev_dependencies:
   very_good_analysis: ^6.0.0
+  meta: ^1.15.0
 
 flutter:
   assets:
     - assets/images/
     - assets/images/player/warrior_1/
     - assets/images/enemies/orc_berserk/
+    - assets/images/enemies/orc_shaman/
+    - assets/images/enemies/orc_warrior/
     - assets/images/trees/tree/
