@@ -27,6 +27,7 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
     game.camera
       ..viewfinder.anchor = Anchor.topLeft
       ..viewport.add(Hud());
+
     return super.onLoad();
   }
 
@@ -69,14 +70,14 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
         };
         if (objectToSpawn != null) {
           map[i][j] = objectToSpawn;
-          add(objectToSpawn);
+          game.add(objectToSpawn);
         }
       }
     }
   }
 
   FutureOr<void> _loadPlayer() async {
-    add(
+    game.add(
       Player(
         position: game.size / 2,
       ),
