@@ -29,6 +29,12 @@ final class Tree extends SpriteComponent with HasGameRef<NanoRpgGame>, Collision
 
     add(
       RectangleHitbox(
+        size: Vector2(48, 64),
+        position: Vector2(
+          size.x / 2,
+          size.y,
+        ),
+        anchor: Anchor.bottomCenter,
         collisionType: CollisionType.passive,
       ),
     );

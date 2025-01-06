@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame_nano_rpg/actors/enemy.dart';
+import 'package:flame_nano_rpg/actors/tree.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flutter/services.dart';
 
@@ -78,6 +80,7 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
   final int damage = 25;
 
   final velocity = Vector2.zero();
+  final collisionDirection = Vector2.zero();
 
   bool isAttacking = false;
   bool attackingInProgress = false;
@@ -110,7 +113,7 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
     // Add hitbox
     add(
       RectangleHitbox(
-        size: Vector2(68, 50),
+        size: Vector2(54, 50),
         position: Vector2(
           size.x / 2,
           size.y,
@@ -125,9 +128,13 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
   @override
   void update(double dt) {
     // Change position
+
+    final newPosX = position.x + velocity.x * moveSpeed * dt;
+    final newPosY = position.y + velocity.y * moveSpeed * dt;
+
     position.setValues(
-      position.x + velocity.x * moveSpeed * dt,
-      position.y + velocity.y * moveSpeed * dt,
+      newPosX,
+      newPosY,
     );
 
     // Control flip
@@ -179,12 +186,32 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
       _ => 0.0,
     };
 
-    // Increase velocity by X and Y diff
     velocity.setValues(diffX, diffY);
+
+    print('Velocity: $velocity\tCollision: $collisionDirection');
+
+    if(velocity.x != 0 && velocity.y == 0) {
+      if(velocity.x == collisionDirection.x) {
+        velocity.setValues(0, 0);
+      }
+      else {
+        velocity.setValues(velocity.x, 0);
+      }
+    }
+
+    else if(velocity.x == 0 && velocity.y != 0) {
+      if(velocity.y == collisionDirection.y) {
+        velocity.setValues(0, 0);
+      }
+      else {
+        velocity.setValues(0, velocity.y);
+      }
+    }
+
+    print('Resulting Velocity: $velocity');
 
     // Set velocity to zero if there is a pending attack
     if (isAttacking) {
-      velocity.setValues(0, 0);
       return true;
     }
 
@@ -227,7 +254,22 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
       }
       // Make enemy look at player
       other.lookAtTarget(position);
+    } else if (other is Tree) {
+      final targetDirection = other.position - position;
+      collisionDirection.setValues(
+        targetDirection.x == 0 ? 0 : targetDirection.x / targetDirection.x.abs(),
+        targetDirection.y == 0 ? 0 : targetDirection.y / targetDirection.y.abs(),
+      );
     }
+
     super.onCollision(intersectionPoints, other);
+  }
+
+  @override
+  void onCollisionEnd(PositionComponent other) {
+    if (other is Tree) {
+      collisionDirection.setValues(0, 0);
+    }
+    super.onCollisionEnd(other);
   }
 }
