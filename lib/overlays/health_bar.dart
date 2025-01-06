@@ -5,13 +5,16 @@ import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flame_nano_rpg/overlays/progress_bar.dart';
 import 'package:flutter/material.dart';
 
-final class HealthBar extends PositionComponent with HasGameRef<NanoRpgGame> {
+final class HealthBar extends PositionComponent with HasGameRef<NanoRpgGame>{
   HealthBar({
+    required this.progress,
     required super.position,
   }) : super(
           size: Vector2(100, 20),
           anchor: Anchor.topLeft,
         );
+
+  final double progress;
 
   late final TextComponent _labelTextComponent;
   late final ProgressBar _healthProgressBar;
@@ -32,7 +35,7 @@ final class HealthBar extends PositionComponent with HasGameRef<NanoRpgGame> {
     game.add(_labelTextComponent);
     
     _healthProgressBar = ProgressBar(
-      progress: game.playerHealth / game.playerMaxHealth,
+      progress: progress,
       progressColor: Colors.red,
       bgColor: Colors.white,
       position: position + Vector2(_labelTextComponent.size.x + 5, 4),
@@ -47,7 +50,7 @@ final class HealthBar extends PositionComponent with HasGameRef<NanoRpgGame> {
 
   @override
   void update(double dt) {
-    _healthProgressBar.progress = game.playerHealth / game.playerMaxHealth;
+    _healthProgressBar.progress = progress;
     super.update(dt);
   }
 }

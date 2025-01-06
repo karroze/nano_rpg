@@ -6,8 +6,6 @@ import 'package:flame/effects.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame_nano_rpg/actors/explosion.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
-import 'package:flame_nano_rpg/overlays/progress_bar.dart';
-import 'package:flutter/material.dart';
 
 enum EnemyState {
   idle,
@@ -85,6 +83,8 @@ final class Enemy extends SpriteAnimationGroupComponent<EnemyState>
   bool isAttacked = false;
   bool attackingInProgress = false;
 
+  bool get isAlive => health > 0;
+
   @override
   FutureOr<void> onLoad() {
     // Map states to animations
@@ -98,16 +98,19 @@ final class Enemy extends SpriteAnimationGroupComponent<EnemyState>
       // PlayerState.attack3: attackAnimation3,
     };
 
-    // Set attack animations tickers
+    // Set attack animation tickers
     animationTickers?[EnemyState.attack]?.onComplete = () {
       isAttacking = false;
       attackingInProgress = false;
     };
 
+    // Set hurt animation tickers
     animationTickers?[EnemyState.hurt]?.onComplete = () {
       isAttacked = false;
       current = EnemyState.idle;
     };
+
+    // Set die animation tickers
     animationTickers?[EnemyState.die]?.onComplete = () async {
       add(
         OpacityEffect.fadeOut(
@@ -138,34 +141,29 @@ final class Enemy extends SpriteAnimationGroupComponent<EnemyState>
     // Add hitbox
     add(RectangleHitbox());
 
-    game.add(
-      ProgressBar(
-        progress: .5,
-        progressColor: Colors.red,
-        bgColor: Colors.white,
-        position: position + Vector2(0, -20),
-      ),
-    );
-
     return super.onLoad();
   }
 
   @override
   void update(double dt) {
-    // Update animation state
-    if (!isAttacked) {
-      if (isAttacking) {
-        if (!attackingInProgress) {
-          current = [EnemyState.attack].random();
-          attackingInProgress = true;
-        }
-      } else {
-        if (velocity.isZero()) {
-          current = EnemyState.idle;
-        } else {
-          current = EnemyState.walk;
-        }
-      }
+    // If attacked, do nothing
+    if (isAttacked) return super.update(dt);
+
+    // If attacking and not already started attack animation
+    if (isAttacking) {
+      // If there is an attacking in progress, do nothing
+      if (attackingInProgress) return super.update(dt);
+
+      current = [EnemyState.attack].random();
+      attackingInProgress = true;
+      return super.update(dt);
+    }
+
+    // Handle idle or walking
+    if (velocity.isZero()) {
+      current = EnemyState.idle;
+    } else {
+      current = EnemyState.walk;
     }
     super.update(dt);
   }
@@ -174,16 +172,31 @@ final class Enemy extends SpriteAnimationGroupComponent<EnemyState>
     required int damage,
     required Vector2 targetScale,
   }) {
+    // Decrease health
     health -= damage;
+    // Toggle being attacked
     isAttacked = true;
-    if (health <= 0) {
-      current = EnemyState.die;
-    } else {
-      current = EnemyState.hurt;
-    }
+    // Get new state
+    final damageState = switch (isAlive) {
+      true => EnemyState.hurt,
+      false => EnemyState.die,
+    };
+    current = damageState;
   }
 
-  void lookAtTarget(Vector2 target) {
-    scale.x = -target.x;
+  void lookAtTarget(
+    Vector2 targetPosition,
+  ) {
+    // Do nothing if dead
+    if (!isAlive) return;
+
+    // If target is on the right
+    if (targetPosition.x >= position.x) {
+      // Set scale to +1
+      scale.x = 1;
+    } else {
+      // Set scale to -1
+      scale.x = -1;
+    }
   }
 }

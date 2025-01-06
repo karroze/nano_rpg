@@ -74,11 +74,11 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
     ),
   );
 
+  late final _enemyTargets = <Enemy>[];
+
   final int damage = 25;
 
   Vector2 velocity = Vector2.zero();
-
-  PositionComponent? target;
 
   bool isAttacking = false;
   bool attackingInProgress = false;
@@ -116,6 +116,7 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
 
   @override
   void update(double dt) {
+    // Change position
     position += velocity * moveSpeed * dt;
 
     // Control flip
@@ -139,6 +140,9 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
       }
     }
 
+    // Clear enemy targets
+    _enemyTargets.clear();
+
     super.update(dt);
   }
 
@@ -147,54 +151,66 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
     velocity = Vector2.zero();
     // Check for jump
     // hasJumped = keysPressed.contains(LogicalKeyboardKey.space);
-    // Check for attack if there is no attack in progress
-    if (!isAttacking) {
-      isAttacking = keysPressed.contains(LogicalKeyboardKey.keyE);
-      if (isAttacking) {
-        final hasEnoughStamina = game.playerStamina >= game.playerStaminaPerHit;
-        if (hasEnoughStamina) {
-          game.playerStamina -= game.playerStaminaPerHit;
-          if(target is Enemy) {
-            (target! as Enemy).receiveDamage(
-              damage: damage,
-              targetScale: scale,
-            );
-          }
-        }
-        else {
-          isAttacking = false;
-        }
-      } else {
-        // Check for movement
-        final double diffX = switch (keysPressed) {
-          final Set<LogicalKeyboardKey> keys
-              when keys.contains(LogicalKeyboardKey.keyA) || keys.contains(LogicalKeyboardKey.arrowLeft) =>
-            -1,
-          final Set<LogicalKeyboardKey> keys
-              when keys.contains(LogicalKeyboardKey.keyD) || keys.contains(LogicalKeyboardKey.arrowRight) =>
-            1,
-          _ => 0,
-        };
-        final double diffY = switch (keysPressed) {
-          final Set<LogicalKeyboardKey> keys
-              when keys.contains(LogicalKeyboardKey.keyW) || keys.contains(LogicalKeyboardKey.arrowUp) =>
-            -1,
-          final Set<LogicalKeyboardKey> keys
-              when keys.contains(LogicalKeyboardKey.keyS) || keys.contains(LogicalKeyboardKey.arrowDown) =>
-            1,
-          _ => 0,
-        };
-        velocity += Vector2(diffX, diffY);
+
+    // Do nothing if there is a pending attack
+    if (isAttacking) return super.onKeyEvent(event, keysPressed);
+
+    // Check if attack button was pressed
+    isAttacking = keysPressed.contains(LogicalKeyboardKey.keyE);
+    // If so
+    if (isAttacking) {
+      // Check if there is enough stamina to attack
+      final hasEnoughStamina = game.playerStamina >= game.playerStaminaPerHit;
+
+      // If not, set attacking to false and do nothing
+      if (!hasEnoughStamina) {
+        isAttacking = false;
+        return super.onKeyEvent(event, keysPressed);
       }
+
+      // Decrease player stamina
+      game.playerStamina -= game.playerStaminaPerHit;
+      // Deal damage to every enemy target
+      for (final enemyTarget in _enemyTargets) {
+        enemyTarget.receiveDamage(
+          damage: damage,
+          targetScale: scale,
+        );
+      }
+      return super.onKeyEvent(event, keysPressed);
     }
+
+    // Check for movement
+    final diffX = switch (keysPressed) {
+      final Set<LogicalKeyboardKey> keys
+          when keys.contains(LogicalKeyboardKey.keyA) || keys.contains(LogicalKeyboardKey.arrowLeft) =>
+        -1.0,
+      final Set<LogicalKeyboardKey> keys
+          when keys.contains(LogicalKeyboardKey.keyD) || keys.contains(LogicalKeyboardKey.arrowRight) =>
+        1.0,
+      _ => 0.0,
+    };
+    final diffY = switch (keysPressed) {
+      final Set<LogicalKeyboardKey> keys
+          when keys.contains(LogicalKeyboardKey.keyW) || keys.contains(LogicalKeyboardKey.arrowUp) =>
+        -1.0,
+      final Set<LogicalKeyboardKey> keys
+          when keys.contains(LogicalKeyboardKey.keyS) || keys.contains(LogicalKeyboardKey.arrowDown) =>
+        1.0,
+      _ => 0.0,
+    };
+    velocity += Vector2(diffX, diffY);
+
     return super.onKeyEvent(event, keysPressed);
   }
 
   @override
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
-    if(other is Enemy) {
-      target = other;
-      other.lookAtTarget(scale);
+    if (other is Enemy) {
+      // Add enemy to the enemies list
+      _enemyTargets.add(other);
+      // Make enemy look at player
+      other.lookAtTarget(position);
     }
     super.onCollision(intersectionPoints, other);
   }

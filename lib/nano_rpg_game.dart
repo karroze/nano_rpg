@@ -1,13 +1,7 @@
 import 'dart:async';
-import 'dart:math';
 
-import 'package:flame/components.dart';
 import 'package:flame/events.dart';
-import 'package:flame/experimental.dart';
 import 'package:flame/game.dart';
-import 'package:flame_nano_rpg/actors/enemy.dart';
-import 'package:flame_nano_rpg/actors/player.dart';
-import 'package:flame_nano_rpg/overlays/hud.dart';
 import 'package:flame_nano_rpg/worlds/main_world.dart';
 
 final class NanoRpgGame extends FlameGame with HasCollisionDetection, HasKeyboardHandlerComponents {
