@@ -150,6 +150,9 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
         current = [PlayerState.attack1, PlayerState.attack2, PlayerState.attack3].random();
         attackingInProgress = true;
       }
+      else {
+        return super.update(dt);
+      }
     } else {
       if (velocity.isZero()) {
         current = PlayerState.idle;
@@ -212,6 +215,7 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
 
     // Set velocity to zero if there is a pending attack
     if (isAttacking) {
+      velocity.setValues(0, 0);
       return true;
     }
 
