@@ -8,6 +8,7 @@ import 'package:flame/game.dart';
 import 'package:flame_nano_rpg/actors/enemy.dart';
 import 'package:flame_nano_rpg/actors/player.dart';
 import 'package:flame_nano_rpg/overlays/hud.dart';
+import 'package:flame_nano_rpg/worlds/main_world.dart';
 
 final class NanoRpgGame extends FlameGame with HasCollisionDetection, HasKeyboardHandlerComponents {
   final playerMaxHealth = 100;
@@ -16,7 +17,7 @@ final class NanoRpgGame extends FlameGame with HasCollisionDetection, HasKeyboar
   final playerStaminaPerHit = 25;
   final playerStaminaRegenPerTimeframe = 10;
 
-  final gridSize = 50;
+  late final RouterComponent router;
 
   late int playerHealth = playerMaxHealth;
   late int playerStamina = playerMaxStamina;
@@ -25,13 +26,16 @@ final class NanoRpgGame extends FlameGame with HasCollisionDetection, HasKeyboar
 
   @override
   FutureOr<void> onLoad() async {
-    await _loadAssets();
-    await _loadMap();
-    await _loadPlayer();
-    await _loadEnemies();
+    router = RouterComponent(
+      initialRoute: 'world',
+      routes: {
+        'world': WorldRoute(MainWorld.new),
+      },
+    );
 
-    camera.viewfinder.anchor = Anchor.topLeft;
-    camera.viewport.add(Hud());
+    await _loadAssets();
+
+    add(router);
 
     return super.onLoad();
   }
@@ -67,41 +71,5 @@ final class NanoRpgGame extends FlameGame with HasCollisionDetection, HasKeyboar
       playerStamina = playerStamina.clamp(0, playerMaxStamina);
     }
     super.update(dt);
-  }
-
-  FutureOr<void> _loadMap() async {
-    final mapSizeX = (size.x / gridSize).ceil();
-    final maxSizeY = (size.y / gridSize).ceil();
-    for (var i = 1; i < mapSizeX - 1; i++) {
-      for (var j = 1; j < maxSizeY - 1; j++) {
-        final random = Random().nextInt(5000);
-        if (random < 50) {
-          add(
-            Enemy(
-              position: Vector2(
-                i * gridSize.toDouble(),
-                j * gridSize.toDouble(),
-              ),
-            ),
-          );
-        }
-      }
-    }
-  }
-
-  FutureOr<void> _loadPlayer() async {
-    add(
-      Player(
-        position: size / 2,
-      ),
-    );
-  }
-
-  FutureOr<void> _loadEnemies() async {
-    add(
-      Enemy(
-        position: size / 2 + Vector2(150, 0),
-      ),
-    );
   }
 }
