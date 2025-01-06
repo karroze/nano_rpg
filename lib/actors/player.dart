@@ -116,7 +116,10 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
   @override
   void update(double dt) {
     // Change position
-    position += velocity * moveSpeed * dt;
+    position.setValues(
+      position.x + velocity.x * moveSpeed * dt,
+      position.y + velocity.y * moveSpeed * dt,
+    );
 
     // Control flip
     final goesLeftLooksRight = velocity.x < 0 && scale.x > 0;
@@ -147,7 +150,7 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
 
   @override
   bool onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
-    // print('KeyEvent: ${event.logicalKey.keyLabel}');
+    print('KeyEvent: ${event.logicalKey.keyLabel}');
     // print('KEys: ${keysPressed.map((i) => '${i.keyLabel}\t').toList()}');
 
     // Check for jump
@@ -168,12 +171,12 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
     };
 
     // Increase velocity by X and Y diff
-    velocity = Vector2(diffX, diffY);
+    velocity.setValues(diffX, diffY);
 
-    // Do nothing if there is a pending attack
+    // Set velocity to zero if there is a pending attack
     if (isAttacking) {
-      velocity = Vector2.zero();
-      return super.onKeyEvent(event, keysPressed);
+      velocity.setValues(0, 0);
+      return true;
     }
 
     // Check if attack button was pressed
@@ -185,11 +188,11 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
       // If not, set attacking to false and do nothing
       if (!hasEnoughStamina) {
         isAttacking = false;
-        return super.onKeyEvent(event, keysPressed);
+        return true;
       }
 
       // Set movement to zero
-      velocity = Vector2.zero();
+      velocity.setValues(0, 0);
 
       // Decrease player stamina
       game.playerStamina -= game.playerStaminaPerHit;
@@ -201,7 +204,6 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
         );
       }
     }
-    print("FIN");
 
     return super.onKeyEvent(event, keysPressed);
   }
