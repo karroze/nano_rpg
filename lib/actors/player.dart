@@ -15,8 +15,7 @@ enum PlayerState {
   attack3;
 }
 
-final class Player extends SpriteAnimationGroupComponent<PlayerState>
-    with HasGameRef<NanoRpgGame>, KeyboardHandler, CollisionCallbacks {
+final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameRef<NanoRpgGame>, KeyboardHandler, CollisionCallbacks {
   Player({
     required super.position,
   }) : super(
@@ -148,16 +147,37 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
 
   @override
   bool onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
-    velocity = Vector2.zero();
+    // print('KeyEvent: ${event.logicalKey.keyLabel}');
+    // print('KEys: ${keysPressed.map((i) => '${i.keyLabel}\t').toList()}');
+
     // Check for jump
     // hasJumped = keysPressed.contains(LogicalKeyboardKey.space);
 
+    // Check for X movement
+    final diffX = switch (keysPressed) {
+      final Set<LogicalKeyboardKey> keys when keys.contains(LogicalKeyboardKey.keyA) || keys.contains(LogicalKeyboardKey.arrowLeft) => -1.0,
+      final Set<LogicalKeyboardKey> keys when keys.contains(LogicalKeyboardKey.keyD) || keys.contains(LogicalKeyboardKey.arrowRight) => 1.0,
+      _ => 0.0,
+    };
+
+    // Check for Y movement
+    final diffY = switch (keysPressed) {
+      final Set<LogicalKeyboardKey> keys when keys.contains(LogicalKeyboardKey.keyW) || keys.contains(LogicalKeyboardKey.arrowUp) => -1.0,
+      final Set<LogicalKeyboardKey> keys when keys.contains(LogicalKeyboardKey.keyS) || keys.contains(LogicalKeyboardKey.arrowDown) => 1.0,
+      _ => 0.0,
+    };
+
+    // Increase velocity by X and Y diff
+    velocity = Vector2(diffX, diffY);
+
     // Do nothing if there is a pending attack
-    if (isAttacking) return super.onKeyEvent(event, keysPressed);
+    if (isAttacking) {
+      velocity = Vector2.zero();
+      return super.onKeyEvent(event, keysPressed);
+    }
 
     // Check if attack button was pressed
     isAttacking = keysPressed.contains(LogicalKeyboardKey.keyE);
-    // If so
     if (isAttacking) {
       // Check if there is enough stamina to attack
       final hasEnoughStamina = game.playerStamina >= game.playerStaminaPerHit;
@@ -168,6 +188,9 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
         return super.onKeyEvent(event, keysPressed);
       }
 
+      // Set movement to zero
+      velocity = Vector2.zero();
+
       // Decrease player stamina
       game.playerStamina -= game.playerStaminaPerHit;
       // Deal damage to every enemy target
@@ -177,29 +200,8 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
           targetScale: scale,
         );
       }
-      return super.onKeyEvent(event, keysPressed);
     }
-
-    // Check for movement
-    final diffX = switch (keysPressed) {
-      final Set<LogicalKeyboardKey> keys
-          when keys.contains(LogicalKeyboardKey.keyA) || keys.contains(LogicalKeyboardKey.arrowLeft) =>
-        -1.0,
-      final Set<LogicalKeyboardKey> keys
-          when keys.contains(LogicalKeyboardKey.keyD) || keys.contains(LogicalKeyboardKey.arrowRight) =>
-        1.0,
-      _ => 0.0,
-    };
-    final diffY = switch (keysPressed) {
-      final Set<LogicalKeyboardKey> keys
-          when keys.contains(LogicalKeyboardKey.keyW) || keys.contains(LogicalKeyboardKey.arrowUp) =>
-        -1.0,
-      final Set<LogicalKeyboardKey> keys
-          when keys.contains(LogicalKeyboardKey.keyS) || keys.contains(LogicalKeyboardKey.arrowDown) =>
-        1.0,
-      _ => 0.0,
-    };
-    velocity += Vector2(diffX, diffY);
+    print("FIN");
 
     return super.onKeyEvent(event, keysPressed);
   }

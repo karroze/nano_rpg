@@ -15,8 +15,7 @@ enum EnemyState {
   die;
 }
 
-final class Enemy extends SpriteAnimationGroupComponent<EnemyState>
-    with HasGameRef<NanoRpgGame>, KeyboardHandler, CollisionCallbacks {
+final class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasGameRef<NanoRpgGame>, KeyboardHandler, CollisionCallbacks {
   Enemy({
     required super.position,
   }) : super(

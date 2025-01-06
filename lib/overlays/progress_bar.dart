@@ -23,7 +23,6 @@ final class ProgressBar extends PositionComponent {
   late final progressPaint = Paint()..color = progressColor;
   late final bgPaint = Paint()..color = bgColor;
 
-
   @override
   void render(Canvas canvas) {
     canvas
