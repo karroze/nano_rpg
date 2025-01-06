@@ -108,7 +108,16 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
     };
 
     // Add hitbox
-    add(RectangleHitbox());
+    add(
+      RectangleHitbox(
+        size: Vector2(68, 50),
+        position: Vector2(
+          size.x / 2,
+          size.y,
+        ),
+        anchor: Anchor.bottomCenter,
+      ),
+    );
 
     return super.onLoad();
   }
@@ -211,8 +220,10 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
   @override
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
     if (other is Enemy) {
-      // Add enemy to the enemies list
-      _enemyTargets.add(other);
+      if (other.scale.x != scale.x) {
+        // Add enemy to the enemies list
+        _enemyTargets.add(other);
+      }
       // Make enemy look at player
       other.lookAtTarget(position);
     }

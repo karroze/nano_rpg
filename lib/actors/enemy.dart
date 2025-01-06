@@ -138,7 +138,16 @@ final class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasGame
     // };
 
     // Add hitbox
-    add(RectangleHitbox());
+    add(
+      RectangleHitbox(
+        size: Vector2(68, 64),
+        position: Vector2(
+          size.x / 2,
+          size.y,
+        ),
+        anchor: Anchor.bottomCenter,
+      ),
+    );
 
     return super.onLoad();
   }

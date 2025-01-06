@@ -7,7 +7,7 @@ final class Explosion extends SpriteAnimationComponent with HasGameRef<NanoRpgGa
   Explosion({
     required super.position,
   }) : super(
-          size: Vector2.all(150),
+          size: Vector2.all(96),
           anchor: Anchor.center,
           removeOnFinish: true,
         );
