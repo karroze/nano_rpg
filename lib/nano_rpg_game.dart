@@ -6,9 +6,9 @@ import 'package:flame_nano_rpg/worlds/main_world.dart';
 
 final class NanoRpgGame extends FlameGame with HasCollisionDetection, HasKeyboardHandlerComponents {
   final playerMaxHealth = 100;
-  final playerMaxStamina = 100;
+  final playerMaxStamina = 160;
 
-  final playerStaminaPerHit = 25;
+  final playerStaminaPerHit = 20;
   final playerStaminaRegenPerTimeframe = 10;
 
   late final RouterComponent router;

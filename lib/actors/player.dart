@@ -21,6 +21,7 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
   Player({
     required super.position,
   }) : super(
+          key: ComponentKey.named('player'),
           size: Vector2(96, 96),
           anchor: Anchor.center,
         );
@@ -149,8 +150,7 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
       if (!attackingInProgress) {
         current = [PlayerState.attack1, PlayerState.attack2, PlayerState.attack3].random();
         attackingInProgress = true;
-      }
-      else {
+      } else {
         return super.update(dt);
       }
     } else {
@@ -193,20 +193,16 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
 
     print('Velocity: $velocity\tCollision: $collisionDirection');
 
-    if(velocity.x != 0 && velocity.y == 0) {
-      if(velocity.x == collisionDirection.x) {
+    if (velocity.x != 0 && velocity.y == 0) {
+      if (velocity.x == collisionDirection.x) {
         velocity.setValues(0, 0);
-      }
-      else {
+      } else {
         velocity.setValues(velocity.x, 0);
       }
-    }
-
-    else if(velocity.x == 0 && velocity.y != 0) {
-      if(velocity.y == collisionDirection.y) {
+    } else if (velocity.x == 0 && velocity.y != 0) {
+      if (velocity.y == collisionDirection.y) {
         velocity.setValues(0, 0);
-      }
-      else {
+      } else {
         velocity.setValues(0, velocity.y);
       }
     }
@@ -252,12 +248,14 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
   @override
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
     if (other is Enemy) {
-      if (other.scale.x != scale.x) {
+      final lookingAtEnemyOnRight = scale.x > 1 && other.position.x >= position.x;
+      final lookingAtEnemyOnLeft = scale.x < 1 && other.position.x < position.x;
+      if (lookingAtEnemyOnRight || lookingAtEnemyOnLeft) {
         // Add enemy to the enemies list
         _enemyTargets.add(other);
       }
       // Make enemy look at player
-      other.lookAtTarget(position);
+      // other.lookAtTarget(position);
     } else if (other is Tree) {
       final targetDirection = other.position - position;
       collisionDirection.setValues(

@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:math';
+import 'dart:ui';
 
+import 'package:flame_nano_rpg/actors/player.dart';
 import 'package:meta/meta.dart';
 
 import 'package:flame/collisions.dart';
@@ -31,6 +34,12 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasG
   @mustBeOverridden
   int get maxHealth;
 
+  double get visibilityRange => 150;
+
+  int get walkingRange => 100;
+
+  double get attackRange => 50;
+
   Vector2 get hitboxSize => Vector2(68, 64);
 
   late final SpriteAnimation idleAnimation;
@@ -42,11 +51,15 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasG
   late final velocity = Vector2.zero();
   late int health = maxHealth;
 
+  Vector2? walkPoint;
+
   bool isAttacking = false;
   bool isAttacked = false;
   bool attackingInProgress = false;
 
   bool get isAlive => health > 0;
+
+  Player? player;
 
   @override
   FutureOr<void> onLoad() {
@@ -137,7 +150,74 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasG
     } else {
       current = EnemyState.walk;
     }
+
+    player ??= game.findByKeyName('player');
+    if (player != null) {
+      final playerPosition = player!.position;
+      final distanceToPlayer = (playerPosition - position).length;
+      if (distanceToPlayer > visibilityRange && walkPoint == null) {
+        _searchWalkPoint();
+      } else if (distanceToPlayer > walkingRange && distanceToPlayer <= visibilityRange) {
+        lookAtTarget(playerPosition);
+      } else if (distanceToPlayer <= walkingRange && distanceToPlayer > attackRange) {
+        _walkToPlayer(playerPosition);
+        lookAtTarget(playerPosition);
+      }
+    }
+
+    // If there is a walk point
+    if (walkPoint != null) {
+      // Go to point
+      final targetDirection = walkPoint! - position;
+      velocity.setValues(
+        targetDirection.x == 0 ? 0 : targetDirection.x / targetDirection.x.abs(),
+        targetDirection.y == 0 ? 0 : targetDirection.y / targetDirection.y.abs(),
+      );
+
+      // Calculate new position
+      final newPosX = position.x + velocity.x * moveSpeed * dt;
+      final newPosY = position.y + velocity.y * moveSpeed * dt;
+
+      position.setValues(
+        newPosX,
+        newPosY,
+      );
+
+      // // Control flip
+      // final goesLeftLooksRight = velocity.x < 0 && scale.x > 0;
+      // final goesRightLooksLeft = velocity.x > 0 && scale.x < 0;
+      // if (goesLeftLooksRight || goesRightLooksLeft) {
+      //   flipHorizontally();
+      // }
+
+      // Check distance
+      final distanceToWalkPoint = position - walkPoint!;
+      // If there, remove walk point
+      if (distanceToWalkPoint.length <= 1) {
+        walkPoint = null;
+      }
+    } else {
+      velocity.setValues(
+        0,
+        0,
+      );
+    }
+
     super.update(dt);
+  }
+
+  FutureOr<void> _searchWalkPoint() async {
+    final randomX = -walkingRange + Random().nextInt(walkingRange);
+
+    walkPoint = Vector2(
+      position.x + randomX,
+      position.y,
+    );
+  }
+
+  FutureOr<void> _walkToPlayer(Vector2 playerPosition) async {
+    final distance = playerPosition.x > position.x ? attackRange : -attackRange;
+    walkPoint = playerPosition + Vector2(distance, 0);
   }
 
   void receiveDamage({
