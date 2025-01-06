@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
+import 'package:flame/experimental.dart';
 import 'package:flame/game.dart';
 import 'package:flame_nano_rpg/actors/enemy.dart';
 import 'package:flame_nano_rpg/actors/player.dart';
@@ -14,6 +16,8 @@ final class NanoRpgGame extends FlameGame with HasCollisionDetection, HasKeyboar
   final playerStaminaPerHit = 25;
   final playerStaminaRegenPerTimeframe = 10;
 
+  final gridSize = 50;
+
   late int playerHealth = playerMaxHealth;
   late int playerStamina = playerMaxStamina;
 
@@ -22,6 +26,7 @@ final class NanoRpgGame extends FlameGame with HasCollisionDetection, HasKeyboar
   @override
   FutureOr<void> onLoad() async {
     await _loadAssets();
+    await _loadMap();
     await _loadPlayer();
     await _loadEnemies();
 
@@ -35,6 +40,7 @@ final class NanoRpgGame extends FlameGame with HasCollisionDetection, HasKeyboar
     // Load assets
     await images.loadAll(
       [
+        'explosion.png',
         'player/warrior_1/idle.png',
         'player/warrior_1/walk.png',
         'player/warrior_1/attack_1.png',
@@ -61,6 +67,26 @@ final class NanoRpgGame extends FlameGame with HasCollisionDetection, HasKeyboar
       playerStamina = playerStamina.clamp(0, playerMaxStamina);
     }
     super.update(dt);
+  }
+
+  FutureOr<void> _loadMap() async {
+    final mapSizeX = (size.x / gridSize).ceil();
+    final maxSizeY = (size.y / gridSize).ceil();
+    for (var i = 1; i < mapSizeX - 1; i++) {
+      for (var j = 1; j < maxSizeY - 1; j++) {
+        final random = Random().nextInt(5000);
+        if (random < 50) {
+          add(
+            Enemy(
+              position: Vector2(
+                i * gridSize.toDouble(),
+                j * gridSize.toDouble(),
+              ),
+            ),
+          );
+        }
+      }
+    }
   }
 
   FutureOr<void> _loadPlayer() async {

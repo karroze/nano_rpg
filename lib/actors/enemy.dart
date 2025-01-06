@@ -4,7 +4,10 @@ import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/extensions.dart';
+import 'package:flame_nano_rpg/actors/explosion.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
+import 'package:flame_nano_rpg/overlays/progress_bar.dart';
+import 'package:flutter/material.dart';
 
 enum EnemyState {
   idle,
@@ -120,6 +123,7 @@ final class Enemy extends SpriteAnimationGroupComponent<EnemyState>
           milliseconds: 1250,
         ),
       );
+      game.add(Explosion(position: position));
       removeFromParent();
     };
     // animationTickers?[PlayerState.attack2]?.onComplete = () {
@@ -133,6 +137,15 @@ final class Enemy extends SpriteAnimationGroupComponent<EnemyState>
 
     // Add hitbox
     add(RectangleHitbox());
+
+    game.add(
+      ProgressBar(
+        progress: .5,
+        progressColor: Colors.red,
+        bgColor: Colors.white,
+        position: position + Vector2(0, -20),
+      ),
+    );
 
     return super.onLoad();
   }
