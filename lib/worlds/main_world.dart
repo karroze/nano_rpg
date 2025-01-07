@@ -52,10 +52,10 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
         final spawnPosition = Vector2(xPosition, yPosition);
 
         final objectToSpawn = switch (Random().nextInt(5000)) {
-          < 1000 => Tree(
+          < 200 => Tree(
               position: spawnPosition,
             ),
-          < 2500 => [
+          < 500 => [
               EnemyOrcBerserk(
                 position: spawnPosition,
               ),

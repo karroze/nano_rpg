@@ -36,9 +36,9 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasG
 
   double get visibilityRange => 150;
 
-  int get walkingRange => 100;
+  int get walkingRange => 200;
 
-  double get attackRange => 50;
+  double get attackRange => 25;
 
   Vector2 get hitboxSize => Vector2(68, 64);
 
@@ -131,6 +131,74 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasG
 
   @override
   void update(double dt) {
+    // Set vero velocity
+    velocity.setValues(
+      0,
+      0,
+    );
+
+    // Find player if not set
+    player ??= game.findByKeyName('player');
+
+    // If there is a player
+    if (player != null) {
+      // Get its position
+      final playerPosition = player!.position;
+      // Find distance
+      final distanceToPlayer = (playerPosition - position).length;
+
+      if (distanceToPlayer <= visibilityRange) {
+        lookAtTarget(playerPosition);
+      }
+
+      if (distanceToPlayer > visibilityRange && walkPoint == null) {
+        // _searchWalkPoint();
+      } else if (distanceToPlayer > walkingRange && distanceToPlayer <= visibilityRange) {
+        // lookAtTarget(playerPosition);
+      } else if (distanceToPlayer <= walkingRange && distanceToPlayer > attackRange) {
+        walkToTarget(player!);
+      }
+    }
+
+    // If there is a walk point
+    if (walkPoint != null) {
+      // Go to point
+      final targetDirection = walkPoint! - position;
+
+      // If there, remove walk point
+      if (targetDirection.length <= attackRange) {
+        // walkPoint = null;
+        velocity.setValues(0, 0);
+      } else {
+        final isVelocityXZero = (targetDirection.x > 0 && targetDirection.x < 1) || (targetDirection.x < 0 && targetDirection.x > -1);
+        final isVelocityYZero = (targetDirection.y > 0 && targetDirection.y < 1) || (targetDirection.y < 0 && targetDirection.y > -1);
+        final velocityX = isVelocityXZero ? 0.0 : targetDirection.x / targetDirection.x.abs();
+        final velocityY = isVelocityYZero ? 0.0 : targetDirection.y / targetDirection.y.abs();
+
+        // print('Velocity: x: $velocityX y: $velocityY');
+
+        velocity.setValues(
+          velocityX,
+          velocityY,
+        );
+
+        // Calculate new position
+        final newPosX = position.x + velocity.x * moveSpeed * dt;
+        final newPosY = position.y + velocity.y * moveSpeed * dt;
+
+        // Set new position values
+        position.setValues(
+          newPosX,
+          newPosY,
+        );
+
+        // Look at target
+
+        lookAtTarget(walkPoint!);
+      }
+    }
+
+    // Handle animations
     // If attacked, do nothing
     if (isAttacked) return super.update(dt);
 
@@ -151,58 +219,6 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasG
       current = EnemyState.walk;
     }
 
-    player ??= game.findByKeyName('player');
-    if (player != null) {
-      final playerPosition = player!.position;
-      final distanceToPlayer = (playerPosition - position).length;
-      if (distanceToPlayer > visibilityRange && walkPoint == null) {
-        _searchWalkPoint();
-      } else if (distanceToPlayer > walkingRange && distanceToPlayer <= visibilityRange) {
-        lookAtTarget(playerPosition);
-      } else if (distanceToPlayer <= walkingRange && distanceToPlayer > attackRange) {
-        _walkToPlayer(playerPosition);
-        lookAtTarget(playerPosition);
-      }
-    }
-
-    // If there is a walk point
-    if (walkPoint != null) {
-      // Go to point
-      final targetDirection = walkPoint! - position;
-      velocity.setValues(
-        targetDirection.x == 0 ? 0 : targetDirection.x / targetDirection.x.abs(),
-        targetDirection.y == 0 ? 0 : targetDirection.y / targetDirection.y.abs(),
-      );
-
-      // Calculate new position
-      final newPosX = position.x + velocity.x * moveSpeed * dt;
-      final newPosY = position.y + velocity.y * moveSpeed * dt;
-
-      position.setValues(
-        newPosX,
-        newPosY,
-      );
-
-      // // Control flip
-      // final goesLeftLooksRight = velocity.x < 0 && scale.x > 0;
-      // final goesRightLooksLeft = velocity.x > 0 && scale.x < 0;
-      // if (goesLeftLooksRight || goesRightLooksLeft) {
-      //   flipHorizontally();
-      // }
-
-      // Check distance
-      final distanceToWalkPoint = position - walkPoint!;
-      // If there, remove walk point
-      if (distanceToWalkPoint.length <= 1) {
-        walkPoint = null;
-      }
-    } else {
-      velocity.setValues(
-        0,
-        0,
-      );
-    }
-
     super.update(dt);
   }
 
@@ -215,9 +231,17 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasG
     );
   }
 
-  FutureOr<void> _walkToPlayer(Vector2 playerPosition) async {
-    final distance = playerPosition.x > position.x ? attackRange : -attackRange;
-    walkPoint = playerPosition + Vector2(distance, 0);
+  FutureOr<void> walkToTarget(PositionComponent target) async {
+    // Do nothing if dead
+    if (!isAlive) return;
+
+    // Calculate X offset based on what side target is relative to enemy
+    final xOffset = target.position.x > position.x ? -attackRange : attackRange;
+    // Calculate Y offset based on what side target is relative to enemy
+    // final yOffset = target.position.y > position.y ? attackRange : -attackRange;
+
+    // Set walk point with an offset
+    walkPoint = target.position + Vector2(xOffset, 0);
   }
 
   void receiveDamage({
@@ -242,13 +266,18 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasG
     // Do nothing if dead
     if (!isAlive) return;
 
-    // If target is on the right
-    if (targetPosition.x >= position.x) {
-      // Set scale to +1
-      scale.x = 1;
-    } else {
-      // Set scale to -1
-      scale.x = -1;
+    // Calculate new scale
+    final newScaleX = switch (targetPosition.x - position.x >= 5) {
+      true => 1.0,
+      false => -1.0,
+    };
+
+    // print('Current scale: ${scale.x}\tNew scale: $newScaleX');
+
+    // Change scale if new scale differs
+    if (scale.x != newScaleX) {
+      // print('Changing scale');
+      scale.x = newScaleX;
     }
   }
 }

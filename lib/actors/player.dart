@@ -191,7 +191,7 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
 
     velocity.setValues(diffX, diffY);
 
-    print('Velocity: $velocity\tCollision: $collisionDirection');
+    // print('Velocity: $velocity\tCollision: $collisionDirection');
 
     if (velocity.x != 0 && velocity.y == 0) {
       if (velocity.x == collisionDirection.x) {
@@ -207,7 +207,7 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
       }
     }
 
-    print('Resulting Velocity: $velocity');
+    // print('Resulting Velocity: $velocity');
 
     // Set velocity to zero if there is a pending attack
     if (isAttacking) {
@@ -248,14 +248,12 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
   @override
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
     if (other is Enemy) {
-      final lookingAtEnemyOnRight = scale.x > 1 && other.position.x >= position.x;
+      final lookingAtEnemyOnRight = scale.x >= 1 && other.position.x >= position.x;
       final lookingAtEnemyOnLeft = scale.x < 1 && other.position.x < position.x;
       if (lookingAtEnemyOnRight || lookingAtEnemyOnLeft) {
         // Add enemy to the enemies list
         _enemyTargets.add(other);
       }
-      // Make enemy look at player
-      // other.lookAtTarget(position);
     } else if (other is Tree) {
       final targetDirection = other.position - position;
       collisionDirection.setValues(

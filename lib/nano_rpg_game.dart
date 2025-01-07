@@ -19,7 +19,7 @@ final class NanoRpgGame extends FlameGame with HasCollisionDetection, HasKeyboar
   double staminaRegenTime = 1;
 
   @override
-  bool get debugMode => false;
+  bool get debugMode => true;
 
   @override
   FutureOr<void> onLoad() async {
