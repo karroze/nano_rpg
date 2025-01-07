@@ -5,11 +5,11 @@ import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/extensions.dart';
-import 'package:flame_nano_rpg/actors/contracts/living.dart';
 import 'package:flame_nano_rpg/actors/contracts/attackable.dart';
 import 'package:flame_nano_rpg/actors/contracts/attacking.dart';
-import 'package:flame_nano_rpg/actors/explosion.dart';
 import 'package:flame_nano_rpg/actors/contracts/has_stamina.dart';
+import 'package:flame_nano_rpg/actors/contracts/living.dart';
+import 'package:flame_nano_rpg/actors/explosion.dart';
 import 'package:flame_nano_rpg/actors/player.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flame_nano_rpg/objects/damage.dart';
@@ -42,7 +42,6 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState>
 
   //@mustBeOverridden
   double get damageCooldownTimeframeSeconds => 2;
-  
 
   /// Ranges
   double get visibilityRange => 200;
@@ -68,72 +67,8 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState>
   Vector2? walkPoint;
 
   @override
-  FutureOr<void> onLoad() {
-    // Map states to animations
-    animations = {
-      EnemyState.idle: idleAnimation,
-      EnemyState.walk: walkAnimation,
-      EnemyState.attack: attackAnimation,
-      EnemyState.hurt: hurtAnimation,
-      EnemyState.die: dieAnimation,
-      // PlayerState.attack2: attackAnimation2,
-      // PlayerState.attack3: attackAnimation3,
-    };
-
-    // Set attack animation tickers
-    animationTickers?[EnemyState.attack]?.onComplete = () {
-      isAttacking = false;
-      isAttackingInProgress = false;
-    };
-    // Set hurt animation tickers
-    animationTickers?[EnemyState.hurt]
-      ?..onStart = () {
-        add(
-          OpacityEffect.fadeOut(
-            EffectController(
-              alternate: true,
-              duration: 0.125,
-              repeatCount: 2,
-            ),
-          ),
-        );
-      }
-      ..onComplete = () {
-        isAttacked = false;
-        current = EnemyState.idle;
-      };
-
-    // Set die animation tickers
-    animationTickers?[EnemyState.die]?.onComplete = () async {
-      add(
-        OpacityEffect.fadeOut(
-          EffectController(
-            alternate: true,
-            duration: 0.25,
-            repeatCount: 3,
-          ),
-        ),
-      );
-      await Future<void>.delayed(
-        const Duration(
-          milliseconds: 1250,
-        ),
-      );
-      game.add(
-        Explosion(
-          position: position,
-        ),
-      );
-      removeFromParent();
-    };
-    // animationTickers?[PlayerState.attack2]?.onComplete = () {
-    //   isAttacking = false;
-    //   attackingInProgress = false;
-    // };
-    // animationTickers?[PlayerState.attack3]?.onComplete = () {
-    //   isAttacking = false;
-    //   attackingInProgress = false;
-    // };
+  FutureOr<void> onLoad() async {
+    await _loadAnimations();
 
     // Add hitbox
     add(
@@ -188,23 +123,33 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState>
   FutureOr<void> _searchWalkPoint() async {
     final randomX = -walkingRange + Random().nextInt(walkingRange);
 
-    walkPoint = Vector2(
-      position.x + randomX,
-      position.y,
+    // walkToTarget(
+    //   game.size / 2,
+    // );
+
+    print('Point: ${game.size / 2}');
+    print('Target: ${position + Vector2(400,0)}');
+
+    walkToTarget(
+      position +
+          Vector2(
+            randomX.toDouble(),
+            0,
+          ),
     );
   }
 
-  FutureOr<void> walkToTarget(PositionComponent target) async {
+  FutureOr<void> walkToTarget(Vector2 target) async {
     // Do nothing if dead
     if (!isAlive) return;
 
     // Calculate X offset based on what side target is relative to enemy
-    final xOffset = target.position.x > position.x ? -attackRange : attackRange;
+    final xOffset = target.x > position.x ? -attackRange : attackRange;
     // Calculate Y offset based on what side target is relative to enemy
-    // final yOffset = target.position.y > position.y ? attackRange : -attackRange;
+    final yOffset = target.y > position.y ? attackRange : -attackRange;
 
     // Set walk point with an offset
-    walkPoint = target.position + Vector2(xOffset, 0);
+    walkPoint = target + Vector2(xOffset, yOffset);
   }
 
   @override
@@ -280,7 +225,7 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState>
     } else if (distanceToPlayer > walkingRange && distanceToPlayer <= visibilityRange) {
       lookAtTarget(playerPosition);
     } else if (distanceToPlayer <= walkingRange && distanceToPlayer > attackRange) {
-      walkToTarget(player);
+      walkToTarget(player.position);
     } else if (distanceToPlayer <= attackRange && canAttack) {
       _attackPlayer(player);
     }
@@ -295,7 +240,7 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState>
 
     // If there, remove walk point
     if (targetDirection.length <= attackRange) {
-      // walkPoint = null;
+      this.walkPoint = null;
       velocity.setValues(0, 0);
     } else {
       final isVelocityXZero = (targetDirection.x > 0 && targetDirection.x < 1) || (targetDirection.x < 0 && targetDirection.x > -1);
@@ -350,9 +295,77 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState>
 
   /// Attacks [player] and decreases stamina.
   void _attackPlayer(Player player) {
-    if(isAlive) {
+    if (isAlive) {
       decreaseStaminaPerHit();
       attack(target: player);
     }
+  }
+
+  FutureOr<void> _loadAnimations() {
+    // Map states to animations
+    animations = {
+      EnemyState.idle: idleAnimation,
+      EnemyState.walk: walkAnimation,
+      EnemyState.attack: attackAnimation,
+      EnemyState.hurt: hurtAnimation,
+      EnemyState.die: dieAnimation,
+      // PlayerState.attack2: attackAnimation2,
+      // PlayerState.attack3: attackAnimation3,
+    };
+
+    // Set attack animation tickers
+    animationTickers?[EnemyState.attack]?.onComplete = () {
+      isAttacking = false;
+      isAttackingInProgress = false;
+    };
+    // Set hurt animation tickers
+    animationTickers?[EnemyState.hurt]
+      ?..onStart = () {
+        add(
+          OpacityEffect.fadeOut(
+            EffectController(
+              alternate: true,
+              duration: 0.125,
+              repeatCount: 2,
+            ),
+          ),
+        );
+      }
+      ..onComplete = () {
+        isAttacked = false;
+        current = EnemyState.idle;
+      };
+
+    // Set die animation tickers
+    animationTickers?[EnemyState.die]?.onComplete = () async {
+      add(
+        OpacityEffect.fadeOut(
+          EffectController(
+            alternate: true,
+            duration: 0.25,
+            repeatCount: 3,
+          ),
+        ),
+      );
+      await Future<void>.delayed(
+        const Duration(
+          milliseconds: 1250,
+        ),
+      );
+      game.add(
+        Explosion(
+          position: position,
+        ),
+      );
+      removeFromParent();
+    };
+    // animationTickers?[PlayerState.attack2]?.onComplete = () {
+    //   isAttacking = false;
+    //   attackingInProgress = false;
+    // };
+    // animationTickers?[PlayerState.attack3]?.onComplete = () {
+    //   isAttacking = false;
+    //   attackingInProgress = false;
+    // };
   }
 }

@@ -6,7 +6,6 @@ import 'package:flame/extensions.dart';
 import 'package:flame_nano_rpg/actors/enemy_orc_berserk.dart';
 import 'package:flame_nano_rpg/actors/enemy_orc_shaman.dart';
 import 'package:flame_nano_rpg/actors/enemy_orc_warrior.dart';
-import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom.dart';
 import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom_blue_hat.dart';
 import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom_emerald.dart';
 import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom_purple.dart';

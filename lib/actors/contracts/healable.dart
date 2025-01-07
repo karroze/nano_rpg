@@ -1,5 +1,5 @@
-import 'package:flame_nano_rpg/actors/contracts/living.dart';
 import 'package:flame_nano_rpg/actors/contracts/healer.dart';
+import 'package:flame_nano_rpg/actors/contracts/living.dart';
 import 'package:flame_nano_rpg/objects/healing.dart';
 import 'package:meta/meta.dart';
 

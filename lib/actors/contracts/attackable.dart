@@ -1,5 +1,5 @@
-import 'package:flame_nano_rpg/actors/contracts/living.dart';
 import 'package:flame_nano_rpg/actors/contracts/attacking.dart';
+import 'package:flame_nano_rpg/actors/contracts/living.dart';
 import 'package:flame_nano_rpg/objects/damage.dart';
 import 'package:meta/meta.dart';
 
