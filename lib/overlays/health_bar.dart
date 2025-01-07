@@ -14,7 +14,7 @@ final class HealthBar extends PositionComponent with HasGameRef<NanoRpgGame> {
           anchor: Anchor.topLeft,
         );
 
-  final double progress;
+  double progress;
 
   late final TextComponent _labelTextComponent;
   late final ProgressBar _healthProgressBar;
@@ -50,7 +50,7 @@ final class HealthBar extends PositionComponent with HasGameRef<NanoRpgGame> {
 
   @override
   void update(double dt) {
-    _healthProgressBar.progress = progress;
+    _healthProgressBar.progress = progress.clamp(0, 1);
     super.update(dt);
   }
 }

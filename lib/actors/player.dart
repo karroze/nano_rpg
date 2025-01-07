@@ -1,12 +1,17 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
+import 'package:flame/effects.dart';
 import 'package:flame/extensions.dart';
+import 'package:flame/rendering.dart';
+import 'package:flame_nano_rpg/actors/attackable.dart';
+import 'package:flame_nano_rpg/actors/attacking.dart';
 import 'package:flame_nano_rpg/actors/enemy.dart';
+import 'package:flame_nano_rpg/actors/has_stamina.dart';
 import 'package:flame_nano_rpg/actors/tree.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
+import 'package:flame_nano_rpg/objects/damage.dart';
 import 'package:flutter/services.dart';
 
 enum PlayerState {
@@ -14,10 +19,13 @@ enum PlayerState {
   walk,
   attack1,
   attack2,
-  attack3;
+  attack3,
+  hurt,
+  die;
 }
 
-final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGameRef<NanoRpgGame>, KeyboardHandler, CollisionCallbacks {
+final class Player extends SpriteAnimationGroupComponent<PlayerState>
+    with HasGameRef<NanoRpgGame>, KeyboardHandler, CollisionCallbacks, Attacking, Attackable, HasStamina {
   Player({
     required super.position,
   }) : super(
@@ -25,6 +33,21 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
           size: Vector2(96, 96),
           anchor: Anchor.center,
         );
+
+  @override
+  int get maxHealth => 100;
+
+  @override
+  int get maxStamina => 100;
+
+  @override
+  int get staminaPerHit => 15;
+
+  @override
+  int get staminaRegenPerTimeframe => 5;
+
+  @override
+  double get staminaRegenTimeframeSeconds => .5;
 
   static const double moveSpeed = 50;
 
@@ -76,15 +99,32 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
     ),
   );
 
+  late final hurtAnimation = SpriteAnimation.fromFrameData(
+    game.images.fromCache('player/warrior_1/hurt.png'),
+    SpriteAnimationData.sequenced(
+      amount: 2,
+      stepTime: .2,
+      textureSize: Vector2.all(96),
+      loop: false,
+    ),
+  );
+
+  late final dieAnimation = SpriteAnimation.fromFrameData(
+    game.images.fromCache('player/warrior_1/dead.png'),
+    SpriteAnimationData.sequenced(
+      amount: 4,
+      stepTime: .2,
+      textureSize: Vector2.all(96),
+      loop: false,
+    ),
+  );
+
   late final _enemyTargets = <Enemy>[];
 
   final int damage = 25;
 
   final velocity = Vector2.zero();
   final collisionDirection = Vector2.zero();
-
-  bool isAttacking = false;
-  bool attackingInProgress = false;
 
   @override
   FutureOr<void> onLoad() {
@@ -95,21 +135,11 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
       PlayerState.attack1: attackAnimation1,
       PlayerState.attack2: attackAnimation2,
       PlayerState.attack3: attackAnimation3,
+      PlayerState.hurt: hurtAnimation,
+      PlayerState.die: dieAnimation,
     };
 
-    // Set attack animations tickers
-    animationTickers?[PlayerState.attack1]?.onComplete = () {
-      isAttacking = false;
-      attackingInProgress = false;
-    };
-    animationTickers?[PlayerState.attack2]?.onComplete = () {
-      isAttacking = false;
-      attackingInProgress = false;
-    };
-    animationTickers?[PlayerState.attack3]?.onComplete = () {
-      isAttacking = false;
-      attackingInProgress = false;
-    };
+    _setAnimationCallbacks();
 
     // Add hitbox
     add(
@@ -128,119 +158,27 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
 
   @override
   void update(double dt) {
-    // Change position
-
-    final newPosX = position.x + velocity.x * moveSpeed * dt;
-    final newPosY = position.y + velocity.y * moveSpeed * dt;
-
-    position.setValues(
-      newPosX,
-      newPosY,
-    );
-
-    // Control flip
-    final goesLeftLooksRight = velocity.x < 0 && scale.x > 0;
-    final goesRightLooksLeft = velocity.x > 0 && scale.x < 0;
-    if (goesLeftLooksRight || goesRightLooksLeft) {
-      flipHorizontally();
-    }
-
-    // Update animation state
-    if (isAttacking) {
-      if (!attackingInProgress) {
-        current = [PlayerState.attack1, PlayerState.attack2, PlayerState.attack3].random();
-        attackingInProgress = true;
-      } else {
-        return super.update(dt);
-      }
+    if(isAlive) {
+      handleStamina(dt);
+      _handleUpdateMovement(dt);
     } else {
-      if (velocity.isZero()) {
-        current = PlayerState.idle;
-      } else {
-        current = PlayerState.walk;
-      }
+      game.gameOver = true;
     }
 
-    // Clear enemy targets
-    _enemyTargets.clear();
+    _handleAnimation(dt);
+    _disposeEnemyTargets();
 
     super.update(dt);
   }
 
   @override
   bool onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
-    // print('KeyEvent: ${event.logicalKey.keyLabel}');
-    // print('KEys: ${keysPressed.map((i) => '${i.keyLabel}\t').toList()}');
+    // Check that player is alive
+    if(!isAlive) return super.onKeyEvent(event, keysPressed);
 
-    // Check for jump
-    // hasJumped = keysPressed.contains(LogicalKeyboardKey.space);
-
-    // Check for X movement
-    final diffX = switch (keysPressed) {
-      final Set<LogicalKeyboardKey> keys when keys.contains(LogicalKeyboardKey.keyA) || keys.contains(LogicalKeyboardKey.arrowLeft) => -1.0,
-      final Set<LogicalKeyboardKey> keys when keys.contains(LogicalKeyboardKey.keyD) || keys.contains(LogicalKeyboardKey.arrowRight) => 1.0,
-      _ => 0.0,
-    };
-
-    // Check for Y movement
-    final diffY = switch (keysPressed) {
-      final Set<LogicalKeyboardKey> keys when keys.contains(LogicalKeyboardKey.keyW) || keys.contains(LogicalKeyboardKey.arrowUp) => -1.0,
-      final Set<LogicalKeyboardKey> keys when keys.contains(LogicalKeyboardKey.keyS) || keys.contains(LogicalKeyboardKey.arrowDown) => 1.0,
-      _ => 0.0,
-    };
-
-    velocity.setValues(diffX, diffY);
-
-    // print('Velocity: $velocity\tCollision: $collisionDirection');
-
-    if (velocity.x != 0 && velocity.y == 0) {
-      if (velocity.x == collisionDirection.x) {
-        velocity.setValues(0, 0);
-      } else {
-        velocity.setValues(velocity.x, 0);
-      }
-    } else if (velocity.x == 0 && velocity.y != 0) {
-      if (velocity.y == collisionDirection.y) {
-        velocity.setValues(0, 0);
-      } else {
-        velocity.setValues(0, velocity.y);
-      }
-    }
-
-    // print('Resulting Velocity: $velocity');
-
-    // Set velocity to zero if there is a pending attack
-    if (isAttacking) {
-      velocity.setValues(0, 0);
-      return true;
-    }
-
-    // Check if attack button was pressed
-    isAttacking = keysPressed.contains(LogicalKeyboardKey.keyE);
-    if (isAttacking) {
-      // Check if there is enough stamina to attack
-      final hasEnoughStamina = game.playerStamina >= game.playerStaminaPerHit;
-
-      // If not, set attacking to false and do nothing
-      if (!hasEnoughStamina) {
-        isAttacking = false;
-        attackingInProgress = false;
-        return true;
-      }
-
-      // Set movement to zero
-      velocity.setValues(0, 0);
-
-      // Decrease player stamina
-      game.playerStamina -= game.playerStaminaPerHit;
-      // Deal damage to every enemy target
-      for (final enemyTarget in _enemyTargets) {
-        enemyTarget.receiveDamage(
-          damage: damage,
-          targetScale: scale,
-        );
-      }
-    }
+    _handleMovement(keysPressed);
+    _handleCollisionDirection();
+    _handleAttacking(keysPressed);
 
     return super.onKeyEvent(event, keysPressed);
   }
@@ -271,5 +209,206 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState> with HasGa
       collisionDirection.setValues(0, 0);
     }
     super.onCollisionEnd(other);
+  }
+
+  @override
+  void receiveDamage({
+    required Damage damage,
+    required Attacking attacker,
+  }) {
+    super.receiveDamage(damage: damage, attacker: attacker);
+
+    if (isAttackingInProgress && isAlive) return;
+    // Get new state
+    final damageState = switch (isAlive) {
+      true => PlayerState.hurt,
+      false => PlayerState.die,
+    };
+    current = damageState;
+  }
+
+  @override
+  Damage dealDamage() => Damage.melee(
+        amount: damage,
+      );
+
+  /// Handles what animation to play.
+  void _handleAnimation(double dt) {
+    // If attacked, do nothing
+    if (isAttacked) return super.update(dt);
+
+    // Update animation state
+    if (isAttacking) {
+      // If there is an attacking in progress, do nothing
+      if (isAttackingInProgress) return super.update(dt);
+
+      // Choose random attack animation
+      current = [PlayerState.attack1, PlayerState.attack2, PlayerState.attack3].random();
+      return super.update(dt);
+    }
+
+    // Handle idle or walking
+    if (velocity.isZero()) {
+      current = PlayerState.idle;
+    } else {
+      current = PlayerState.walk;
+    }
+  }
+
+  /// Handles movement by processing keyboard [keysPressed]-s.
+  void _handleMovement(Set<LogicalKeyboardKey> keysPressed) {
+    // Check for X movement
+    final diffX = switch (keysPressed) {
+      final Set<LogicalKeyboardKey> keys when keys.contains(LogicalKeyboardKey.keyA) || keys.contains(LogicalKeyboardKey.arrowLeft) => -1.0,
+      final Set<LogicalKeyboardKey> keys when keys.contains(LogicalKeyboardKey.keyD) || keys.contains(LogicalKeyboardKey.arrowRight) => 1.0,
+      _ => 0.0,
+    };
+
+    // Check for Y movement
+    final diffY = switch (keysPressed) {
+      final Set<LogicalKeyboardKey> keys when keys.contains(LogicalKeyboardKey.keyW) || keys.contains(LogicalKeyboardKey.arrowUp) => -1.0,
+      final Set<LogicalKeyboardKey> keys when keys.contains(LogicalKeyboardKey.keyS) || keys.contains(LogicalKeyboardKey.arrowDown) => 1.0,
+      _ => 0.0,
+    };
+
+    velocity.setValues(diffX, diffY);
+  }
+
+  /// Changes [velocity] based on presence and state of [collisionDirection].
+  void _handleCollisionDirection() {
+    if (velocity.x != 0 && velocity.y == 0) {
+      if (velocity.x == collisionDirection.x) {
+        velocity.setValues(0, 0);
+      } else {
+        velocity.setValues(velocity.x, 0);
+      }
+    } else if (velocity.x == 0 && velocity.y != 0) {
+      if (velocity.y == collisionDirection.y) {
+        velocity.setValues(0, 0);
+      } else {
+        velocity.setValues(0, velocity.y);
+      }
+    }
+  }
+
+  /// Handles attacking
+  void _handleAttacking(Set<LogicalKeyboardKey> keysPressed) {
+    // Set velocity to zero if there is a pending attack
+    if (isAttacking) {
+      velocity.setValues(0, 0);
+      return;
+    }
+
+    // Check if attack button was pressed
+    isAttacking = keysPressed.contains(LogicalKeyboardKey.keyE);
+    if (isAttacking) {
+      // If not, set attacking to false and do nothing
+      if (!hasStaminaForAttack) {
+        isAttacking = false;
+        isAttackingInProgress = false;
+        return;
+      }
+
+      // Set movement to zero
+      velocity.setValues(0, 0);
+
+      // Decrease player stamina
+      decreaseStaminaPerHit();
+      // Attack every enemy target
+      for (final enemyTarget in _enemyTargets) {
+        attack(target: enemyTarget);
+      }
+    }
+  }
+
+  /// Updates player position with an update [dt] time.
+  void _handleUpdateMovement(double dt) {
+    // Change position
+    final newPosX = position.x + velocity.x * moveSpeed * dt;
+    final newPosY = position.y + velocity.y * moveSpeed * dt;
+
+    position.setValues(
+      newPosX,
+      newPosY,
+    );
+
+    // Control flip
+    final goesLeftLooksRight = velocity.x < 0 && scale.x > 0;
+    final goesRightLooksLeft = velocity.x > 0 && scale.x < 0;
+    if (goesLeftLooksRight || goesRightLooksLeft) {
+      flipHorizontally();
+    }
+  }
+
+  /// Clears found enemy targets at the end of every update.
+  void _disposeEnemyTargets() {
+    // Clear enemy targets
+    _enemyTargets.clear();
+  }
+
+  /// Sets animation ticker callbacks.
+  void _setAnimationCallbacks() {
+    // Set attack animations tickers
+    animationTickers?[PlayerState.attack1]
+      ?..onStart = () {
+        isAttackingInProgress = true;
+      }
+      ..onComplete = () {
+        isAttacking = false;
+        isAttackingInProgress = false;
+        current = PlayerState.idle;
+      };
+    animationTickers?[PlayerState.attack2]
+      ?..onStart = () {
+        isAttackingInProgress = true;
+      }
+      ..onComplete = () {
+        isAttacking = false;
+        isAttackingInProgress = false;
+        current = PlayerState.idle;
+      };
+    animationTickers?[PlayerState.attack3]
+      ?..onStart = () {
+        isAttackingInProgress = true;
+      }
+      ..onComplete = () {
+        isAttacking = false;
+        isAttackingInProgress = false;
+        current = PlayerState.idle;
+      };
+
+    // Set hurt animation tickers callbacks
+    animationTickers?[PlayerState.hurt]
+      ?..onStart = () {
+        add(
+          OpacityEffect.fadeOut(
+            EffectController(
+              alternate: true,
+              duration: 0.125,
+              repeatCount: 2,
+            ),
+          ),
+        );
+      }
+      ..onComplete = () {
+        isAttacked = false;
+        current = PlayerState.idle;
+      };
+
+    // Set die animation tickers callbacks
+    animationTickers?[PlayerState.die]?.onComplete = () async {
+      // Wait for some time
+      await Future<void>.delayed(
+        const Duration(
+          milliseconds: 1250,
+        ),
+      );
+      // Apply grayscale decorator
+      decorator.addLast(
+        PaintDecorator.grayscale(
+          opacity: 0.5,
+        ),
+      );
+    };
   }
 }

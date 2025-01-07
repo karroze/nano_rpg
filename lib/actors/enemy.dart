@@ -1,16 +1,18 @@
 import 'dart:async';
 import 'dart:math';
-import 'dart:ui';
-
-import 'package:flame_nano_rpg/actors/player.dart';
-import 'package:meta/meta.dart';
 
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/extensions.dart';
+import 'package:flame_nano_rpg/actors/attackable.dart';
+import 'package:flame_nano_rpg/actors/attacking.dart';
 import 'package:flame_nano_rpg/actors/explosion.dart';
+import 'package:flame_nano_rpg/actors/has_stamina.dart';
+import 'package:flame_nano_rpg/actors/player.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
+import 'package:flame_nano_rpg/objects/damage.dart';
+import 'package:meta/meta.dart';
 
 enum EnemyState {
   idle,
@@ -20,7 +22,8 @@ enum EnemyState {
   die;
 }
 
-abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasGameRef<NanoRpgGame>, KeyboardHandler, CollisionCallbacks {
+abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState>
+    with HasGameRef<NanoRpgGame>, KeyboardHandler, CollisionCallbacks, Attackable, Attacking, HasStamina {
   Enemy({
     required super.position,
     required super.size,
@@ -32,27 +35,13 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasG
   @mustBeOverridden
   double get moveSpeed;
 
-  @mustBeOverridden
-  int get maxHealth;
-
-  // @mustBeOverridden
-  int get maxStamina => 100;
-
   /// Attack
   //@mustBeOverridden
   int get damage => 10;
 
   //@mustBeOverridden
-  int get damageCooldown => 250;
-
-  //@mustBeOverridden
-  int get staminaPerHit => 25;
-
-  //@mustBeOverridden
-  double get staminaRegenTimeframeSeconds => 1;
-
-  //@mustBeOverridden
-  int get staminaRegenPerTimeframe => 10;
+  double get damageCooldownTimeframeSeconds => 2;
+  
 
   /// Ranges
   double get visibilityRange => 200;
@@ -72,15 +61,7 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasG
 
   late final velocity = Vector2.zero();
 
-  late int health = maxHealth;
-  late int stamina = maxStamina;
-  late double _staminaRegenTimerValue = staminaRegenTimeframeSeconds;
-
-  bool isAttacking = false;
-  bool isAttacked = false;
-  bool attackingInProgress = false;
-
-  bool get isAlive => health > 0;
+  late double _damageCooldownTimerValue = damageCooldownTimeframeSeconds;
 
   Player? player;
   Vector2? walkPoint;
@@ -101,14 +82,25 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasG
     // Set attack animation tickers
     animationTickers?[EnemyState.attack]?.onComplete = () {
       isAttacking = false;
-      attackingInProgress = false;
+      isAttackingInProgress = false;
     };
-
     // Set hurt animation tickers
-    animationTickers?[EnemyState.hurt]?.onComplete = () {
-      isAttacked = false;
-      current = EnemyState.idle;
-    };
+    animationTickers?[EnemyState.hurt]
+      ?..onStart = () {
+        add(
+          OpacityEffect.fadeOut(
+            EffectController(
+              alternate: true,
+              duration: 0.125,
+              repeatCount: 2,
+            ),
+          ),
+        );
+      }
+      ..onComplete = () {
+        isAttacked = false;
+        current = EnemyState.idle;
+      };
 
     // Set die animation tickers
     animationTickers?[EnemyState.die]?.onComplete = () async {
@@ -126,7 +118,11 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasG
           milliseconds: 1250,
         ),
       );
-      game.add(Explosion(position: position));
+      game.add(
+        Explosion(
+          position: position,
+        ),
+      );
       removeFromParent();
     };
     // animationTickers?[PlayerState.attack2]?.onComplete = () {
@@ -162,7 +158,9 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasG
     );
 
     // Handle stamina regeneration
-    _handleStamina(dt);
+    handleStamina(dt);
+    // Handle attacking cooldown
+    _handleAttackingCooldown(dt);
 
     // Find player if not set
     player ??= game.findByKeyName('player');
@@ -208,14 +206,14 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasG
     walkPoint = target.position + Vector2(xOffset, 0);
   }
 
+  @override
   void receiveDamage({
-    required int damage,
-    required Vector2 targetScale,
+    required Damage damage,
+    required Attacking attacker,
   }) {
-    // Decrease health
-    health -= damage;
-    // Toggle being attacked
-    isAttacked = true;
+    super.receiveDamage(damage: damage, attacker: attacker);
+
+    if (isAttackingInProgress && isAlive) return;
     // Get new state
     final damageState = switch (isAlive) {
       true => EnemyState.hurt,
@@ -223,6 +221,11 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasG
     };
     current = damageState;
   }
+
+  @override
+  Damage dealDamage() => Damage.melee(
+        amount: damage,
+      );
 
   void lookAtTarget(
     Vector2 targetPosition,
@@ -245,17 +248,18 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasG
     }
   }
 
-  /// Handles stamina regeneration per timeframe, decided by passed [dt].
-  void _handleStamina(double dt) {
-    _staminaRegenTimerValue -= dt;
-    // If timer has fired and stamina is less than max
-    if (_staminaRegenTimerValue <= 0 && stamina < maxStamina) {
+  /// Handles attacking cooldown, decided by passing [dt].
+  void _handleAttackingCooldown(double dt) {
+    // Change timer value
+    _damageCooldownTimerValue -= dt;
+    // If timer has fired
+    if (_damageCooldownTimerValue <= 0) {
       // Reset timer value
-      _staminaRegenTimerValue = staminaRegenTimeframeSeconds;
+      _damageCooldownTimerValue = damageCooldownTimeframeSeconds;
       // Increase stamina by per timer timeframe value
-      stamina += staminaRegenPerTimeframe;
-      // Clamp between 0 and maxStamina value
-      stamina = stamina.clamp(0, maxStamina);
+      canAttack = true;
+    } else {
+      canAttack = false;
     }
   }
 
@@ -264,7 +268,7 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasG
     // Get its position
     final playerPosition = player.position;
     // Find distance
-    final distanceToPlayer = (playerPosition - position).length;
+    final distanceToPlayer = (playerPosition - position).length - (player.size / 4).length;
 
     if (distanceToPlayer <= visibilityRange) {
       lookAtTarget(playerPosition);
@@ -276,6 +280,8 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasG
       lookAtTarget(playerPosition);
     } else if (distanceToPlayer <= walkingRange && distanceToPlayer > attackRange) {
       walkToTarget(player);
+    } else if (distanceToPlayer <= attackRange && canAttack) {
+      _attackPlayer(player);
     }
   }
 
@@ -318,7 +324,7 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasG
     }
   }
 
-  /// Handles what animation to play
+  /// Handles what animation to play.
   void _handleAnimation(double dt) {
     // If attacked, do nothing
     if (isAttacked) return super.update(dt);
@@ -326,10 +332,10 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasG
     // If attacking and not already started attack animation
     if (isAttacking) {
       // If there is an attacking in progress, do nothing
-      if (attackingInProgress) return super.update(dt);
+      if (isAttackingInProgress) return super.update(dt);
 
       current = [EnemyState.attack].random();
-      attackingInProgress = true;
+      isAttackingInProgress = true;
       return super.update(dt);
     }
 
@@ -338,6 +344,14 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasG
       current = EnemyState.idle;
     } else {
       current = EnemyState.walk;
+    }
+  }
+
+  /// Attacks [player] and decreases stamina.
+  void _attackPlayer(Player player) {
+    if(isAlive) {
+      decreaseStaminaPerHit();
+      attack(target: player);
     }
   }
 }

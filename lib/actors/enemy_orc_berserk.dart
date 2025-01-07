@@ -15,6 +15,24 @@ final class EnemyOrcBerserk extends Enemy {
   int get maxHealth => 100;
 
   @override
+  int get maxStamina => 100;
+
+  @override
+  int get staminaPerHit => 50;
+
+  @override
+  int get staminaRegenPerTimeframe => 5;
+
+  @override
+  double get staminaRegenTimeframeSeconds => 1;
+
+  @override
+  int get damage => 40;
+
+  @override
+  double get damageCooldownTimeframeSeconds => 3;
+
+  @override
   SpriteAnimation get idleAnimation => SpriteAnimation.fromFrameData(
         game.images.fromCache('enemies/orc_berserk/idle.png'),
         SpriteAnimationData.sequenced(

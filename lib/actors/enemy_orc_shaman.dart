@@ -15,6 +15,24 @@ final class EnemyOrcShaman extends Enemy {
   int get maxHealth => 100;
 
   @override
+  int get maxStamina => 100;
+
+  @override
+  int get staminaPerHit => 20;
+
+  @override
+  int get staminaRegenPerTimeframe => 10;
+
+  @override
+  double get staminaRegenTimeframeSeconds => 1;
+
+  @override
+  int get damage => 10;
+
+  @override
+  double get damageCooldownTimeframeSeconds => 1.5;
+
+  @override
   SpriteAnimation get idleAnimation => SpriteAnimation.fromFrameData(
     game.images.fromCache('enemies/orc_shaman/idle.png'),
     SpriteAnimationData.sequenced(

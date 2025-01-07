@@ -19,16 +19,38 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
 
   final map = <List<PositionComponent?>>[];
 
+  late final Player _player;
+
   @override
   FutureOr<void> onLoad() async {
+    await _initialize(loadHud: true);
+
+    return super.onLoad();
+  }
+
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+
+    if(game.gameReset) {
+      _initialize(loadHud: false);
+    }
+  }
+
+  FutureOr<void> _initialize({
+    required bool loadHud,
+  }) async {
     await _loadMap();
     await _loadPlayer();
 
-    game.camera
-      ..viewfinder.anchor = Anchor.topLeft
-      ..viewport.add(Hud());
+    if (loadHud) {
+      game.camera
+        ..viewfinder.anchor = Anchor.topLeft
+        ..viewport.add(Hud());
+    }
 
-    return super.onLoad();
+    game.gameReset = false;
   }
 
   FutureOr<void> _loadMap() async {

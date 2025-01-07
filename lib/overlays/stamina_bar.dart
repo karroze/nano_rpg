@@ -7,11 +7,14 @@ import 'package:flutter/material.dart';
 
 final class StaminaBar extends PositionComponent with HasGameRef<NanoRpgGame> {
   StaminaBar({
+    required this.progress,
     required super.position,
   }) : super(
           size: Vector2(100, 20),
           anchor: Anchor.topLeft,
         );
+
+  double progress;
 
   late final TextComponent _labelTextComponent;
   late final ProgressBar _staminaProgressBar;
@@ -32,7 +35,7 @@ final class StaminaBar extends PositionComponent with HasGameRef<NanoRpgGame> {
     game.add(_labelTextComponent);
 
     _staminaProgressBar = ProgressBar(
-      progress: game.playerStamina / game.playerMaxStamina,
+      progress: progress,
       progressColor: Colors.green,
       bgColor: Colors.white,
       position: position + Vector2(_labelTextComponent.size.x + 5, 4),
@@ -47,7 +50,7 @@ final class StaminaBar extends PositionComponent with HasGameRef<NanoRpgGame> {
 
   @override
   void update(double dt) {
-    _staminaProgressBar.progress = game.playerStamina / game.playerMaxStamina;
+    _staminaProgressBar.progress = progress.clamp(0, 1);
     super.update(dt);
   }
 }

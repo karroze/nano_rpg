@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flame/components.dart';
+import 'package:flame_nano_rpg/actors/player.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flame_nano_rpg/overlays/health_bar.dart';
 import 'package:flame_nano_rpg/overlays/stamina_bar.dart';
@@ -17,6 +18,11 @@ final class Hud extends PositionComponent with HasGameRef<NanoRpgGame> {
   });
 
   late TextComponent _scoreTextComponent;
+
+  late final HealthBar _healthBar;
+  late final StaminaBar _staminaBar;
+
+  Player? _player;
 
   @override
   FutureOr<void> onLoad() async {
@@ -44,19 +50,17 @@ final class Hud extends PositionComponent with HasGameRef<NanoRpgGame> {
     //     ),
     //   ),
     // );
-
-    add(
-      HealthBar(
-        progress: game.playerHealth / game.playerMaxHealth,
-        position: Vector2(game.size.x - 250, 20),
-      ),
+    _healthBar = HealthBar(
+      progress: 0,
+      position: Vector2(game.size.x - 250, 20),
     );
+    add(_healthBar);
 
-    add(
-      StaminaBar(
-        position: Vector2(game.size.x - 250, 45),
-      ),
+    _staminaBar = StaminaBar(
+      progress: 0,
+      position: Vector2(game.size.x - 250, 45),
     );
+    add(_staminaBar);
 
     add(
       FpsTextComponent(
@@ -72,10 +76,9 @@ final class Hud extends PositionComponent with HasGameRef<NanoRpgGame> {
 
   @override
   void update(double dt) {
-    // final score = game.score.clamp(
-    //   0,
-    //   double.nan,
-    // );
-    // _scoreTextComponent.text = 'Score: $score';
+    // Find player if not set
+    _player ??= game.findByKeyName('player');
+    _healthBar.progress = _player!.health / _player!.maxHealth;
+    _staminaBar.progress = _player!.stamina / _player!.maxStamina;
   }
 }

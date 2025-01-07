@@ -1,0 +1,4 @@
+enum DamageType {
+  melee,
+  magic;
+}

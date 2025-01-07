@@ -15,6 +15,24 @@ final class EnemyOrcWarrior extends Enemy {
   int get maxHealth => 100;
 
   @override
+  int get maxStamina => 100;
+
+  @override
+  int get staminaPerHit => 20;
+
+  @override
+  int get staminaRegenPerTimeframe => 10;
+
+  @override
+  double get staminaRegenTimeframeSeconds => 1;
+
+  @override
+  int get damage => 20;
+
+  @override
+  double get damageCooldownTimeframeSeconds => 2;
+
+  @override
   SpriteAnimation get idleAnimation => SpriteAnimation.fromFrameData(
     game.images.fromCache('enemies/orc_warrior/idle.png'),
     SpriteAnimationData.sequenced(

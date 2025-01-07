@@ -2,31 +2,27 @@ import 'dart:async';
 
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
+import 'package:flame_nano_rpg/overlays/overlays.dart';
 import 'package:flame_nano_rpg/worlds/main_world.dart';
 
 final class NanoRpgGame extends FlameGame with HasCollisionDetection, HasKeyboardHandlerComponents {
-  final playerMaxHealth = 100;
-  final playerMaxStamina = 160;
-
-  final playerStaminaPerHit = 20;
-  final playerStaminaRegenPerTimeframe = 10;
-
   late final RouterComponent router;
 
-  late int playerHealth = playerMaxHealth;
-  late int playerStamina = playerMaxStamina;
-
-  double staminaRegenTime = 1;
-
   @override
-  bool get debugMode => true;
+  bool get debugMode => false;
+
+  bool gameOver = false;
+  bool gameReset = false;
 
   @override
   FutureOr<void> onLoad() async {
     router = RouterComponent(
       initialRoute: 'world',
       routes: {
-        'world': WorldRoute(MainWorld.new),
+        'world': WorldRoute(
+          MainWorld.new,
+          maintainState: false,
+        ),
       },
     );
 
@@ -47,6 +43,8 @@ final class NanoRpgGame extends FlameGame with HasCollisionDetection, HasKeyboar
         'player/warrior_1/attack_1.png',
         'player/warrior_1/attack_2.png',
         'player/warrior_1/attack_3.png',
+        'player/warrior_1/hurt.png',
+        'player/warrior_1/dead.png',
         'enemies/orc_berserk/idle.png',
         'enemies/orc_berserk/walk.png',
         'enemies/orc_berserk/attack_1.png',
@@ -71,12 +69,15 @@ final class NanoRpgGame extends FlameGame with HasCollisionDetection, HasKeyboar
 
   @override
   void update(double dt) {
-    staminaRegenTime -= dt;
-    if (staminaRegenTime <= 0 && playerStamina < playerMaxStamina) {
-      staminaRegenTime = 1;
-      playerStamina += playerStaminaRegenPerTimeframe;
-      playerStamina = playerStamina.clamp(0, playerMaxStamina);
-    }
     super.update(dt);
+    if (gameOver && !gameReset) {
+      // overlays.add(Overlays.gameOver.value);
+      // gameReset = true;
+    }
+  }
+
+  FutureOr<void> reset() {
+    // router.pushReplacementNamed('world');
+    // gameOver = false;
   }
 }
