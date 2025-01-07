@@ -4,6 +4,7 @@ import 'package:flame/components.dart';
 import 'package:flame_nano_rpg/actors/player.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flame_nano_rpg/overlays/health_bar.dart';
+import 'package:flame_nano_rpg/overlays/labeled_progress_bar.dart';
 import 'package:flame_nano_rpg/overlays/stamina_bar.dart';
 
 final class Hud extends PositionComponent with HasGameRef<NanoRpgGame> {
@@ -19,7 +20,7 @@ final class Hud extends PositionComponent with HasGameRef<NanoRpgGame> {
 
   late TextComponent _scoreTextComponent;
 
-  late final HealthBar _healthBar;
+  late final LabeledProgressBar _healthBar;
   late final StaminaBar _staminaBar;
 
   Player? _player;
@@ -51,13 +52,15 @@ final class Hud extends PositionComponent with HasGameRef<NanoRpgGame> {
     //   ),
     // );
     _healthBar = HealthBar(
-      progress: 0,
+      value: 0,
+      maxValue: 0,
       position: Vector2(game.size.x - 250, 20),
     );
     add(_healthBar);
 
     _staminaBar = StaminaBar(
-      progress: 0,
+      value: 0,
+      maxValue: 0,
       position: Vector2(game.size.x - 250, 45),
     );
     add(_staminaBar);
@@ -78,7 +81,11 @@ final class Hud extends PositionComponent with HasGameRef<NanoRpgGame> {
   void update(double dt) {
     // Find player if not set
     _player ??= game.findByKeyName('player');
-    _healthBar.progress = _player!.health / _player!.maxHealth;
-    _staminaBar.progress = _player!.stamina / _player!.maxStamina;
+    _healthBar
+      ..value = _player!.health
+      ..maxValue = _player!.maxHealth;
+    _staminaBar
+      ..value = _player!.stamina
+      ..maxValue = _player!.maxStamina;
   }
 }

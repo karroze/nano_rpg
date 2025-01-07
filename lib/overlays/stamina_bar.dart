@@ -1,56 +1,16 @@
-import 'dart:async';
-
 import 'package:flame/components.dart';
-import 'package:flame_nano_rpg/nano_rpg_game.dart';
-import 'package:flame_nano_rpg/overlays/progress_bar.dart';
+import 'package:flame_nano_rpg/overlays/labeled_progress_bar.dart';
 import 'package:flutter/material.dart';
 
-final class StaminaBar extends PositionComponent with HasGameRef<NanoRpgGame> {
+final class StaminaBar extends LabeledProgressBar {
   StaminaBar({
-    required this.progress,
+    required super.value,
+    required super.maxValue,
     required super.position,
   }) : super(
+          label: 'Stamina:',
+          progressColor: Colors.green,
+          bgColor: Colors.white,
           size: Vector2(100, 20),
-          anchor: Anchor.topLeft,
         );
-
-  double progress;
-
-  late final TextComponent _labelTextComponent;
-  late final ProgressBar _staminaProgressBar;
-
-  @override
-  FutureOr<void> onLoad() {
-    _labelTextComponent = TextComponent(
-      text: 'Stamina:',
-      textRenderer: TextPaint(
-        style: const TextStyle(
-          fontSize: 32,
-          color: Colors.white,
-        ),
-      ),
-      anchor: Anchor.centerLeft,
-      position: position,
-    );
-    game.add(_labelTextComponent);
-
-    _staminaProgressBar = ProgressBar(
-      progress: progress,
-      progressColor: Colors.green,
-      bgColor: Colors.white,
-      position: position + Vector2(_labelTextComponent.size.x + 5, 4),
-      size: size,
-      anchor: Anchor.centerLeft,
-    );
-
-    game.add(_staminaProgressBar);
-
-    return super.onLoad();
-  }
-
-  @override
-  void update(double dt) {
-    _staminaProgressBar.progress = progress.clamp(0, 1);
-    super.update(dt);
-  }
 }
