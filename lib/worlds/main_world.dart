@@ -6,6 +6,11 @@ import 'package:flame/extensions.dart';
 import 'package:flame_nano_rpg/actors/enemy_orc_berserk.dart';
 import 'package:flame_nano_rpg/actors/enemy_orc_shaman.dart';
 import 'package:flame_nano_rpg/actors/enemy_orc_warrior.dart';
+import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom.dart';
+import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom_blue_hat.dart';
+import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom_emerald.dart';
+import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom_purple.dart';
+import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom_stringy.dart';
 import 'package:flame_nano_rpg/actors/player.dart';
 import 'package:flame_nano_rpg/actors/tree.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
@@ -28,12 +33,11 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
     return super.onLoad();
   }
 
-
   @override
   void update(double dt) {
     super.update(dt);
 
-    if(game.gameReset) {
+    if (game.gameReset) {
       _initialize(loadHud: false);
     }
   }
@@ -78,6 +82,20 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
               position: spawnPosition,
             ),
           < 500 => [
+            MushroomBlueHat(
+              position: spawnPosition,
+            ),
+            MushroomEmerald(
+              position: spawnPosition,
+            ),
+            MushroomPurple(
+              position: spawnPosition,
+            ),
+            MushroomStringy(
+              position: spawnPosition,
+            ),
+          ].random(),
+          < 1000 => [
               EnemyOrcBerserk(
                 position: spawnPosition,
               ),

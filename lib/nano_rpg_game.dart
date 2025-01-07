@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
-import 'package:flame_nano_rpg/overlays/overlays.dart';
 import 'package:flame_nano_rpg/worlds/main_world.dart';
 
 final class NanoRpgGame extends FlameGame with HasCollisionDetection, HasKeyboardHandlerComponents {
@@ -63,6 +62,10 @@ final class NanoRpgGame extends FlameGame with HasCollisionDetection, HasKeyboar
         'trees/tree/tree_1.png',
         'trees/tree/tree_2.png',
         'trees/tree/tree_3.png',
+        'objects/mushrooms/mushroom_purple.png',
+        'objects/mushrooms/mushroom_blue_hat.png',
+        'objects/mushrooms/mushroom_stringy.png',
+        'objects/mushrooms/mushroom_emerald.png',
       ],
     );
   }
