@@ -5,10 +5,12 @@ import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame/rendering.dart';
-import 'package:flame_nano_rpg/actors/attackable.dart';
-import 'package:flame_nano_rpg/actors/attacking.dart';
+import 'package:flame_nano_rpg/actors/contracts/living.dart';
+import 'package:flame_nano_rpg/actors/contracts/attackable.dart';
+import 'package:flame_nano_rpg/actors/contracts/attacking.dart';
+import 'package:flame_nano_rpg/actors/contracts/has_stamina.dart';
+import 'package:flame_nano_rpg/actors/contracts/healable.dart';
 import 'package:flame_nano_rpg/actors/enemy.dart';
-import 'package:flame_nano_rpg/actors/has_stamina.dart';
 import 'package:flame_nano_rpg/actors/tree.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flame_nano_rpg/objects/damage.dart';
@@ -25,7 +27,7 @@ enum PlayerState {
 }
 
 final class Player extends SpriteAnimationGroupComponent<PlayerState>
-    with HasGameRef<NanoRpgGame>, KeyboardHandler, CollisionCallbacks, Attacking, Attackable, HasStamina {
+    with HasGameRef<NanoRpgGame>, KeyboardHandler, CollisionCallbacks, Living, Attacking, Attackable, HasStamina, Healable {
   Player({
     required super.position,
   }) : super(
@@ -158,7 +160,7 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
 
   @override
   void update(double dt) {
-    if(isAlive) {
+    if (isAlive) {
       handleStamina(dt);
       _handleUpdateMovement(dt);
     } else {
@@ -174,7 +176,7 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
   @override
   bool onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
     // Check that player is alive
-    if(!isAlive) return super.onKeyEvent(event, keysPressed);
+    if (!isAlive) return super.onKeyEvent(event, keysPressed);
 
     _handleMovement(keysPressed);
     _handleCollisionDirection();

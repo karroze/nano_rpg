@@ -1,4 +1,4 @@
-import 'package:flame_nano_rpg/actors/attackable.dart';
+import 'package:flame_nano_rpg/actors/contracts/attackable.dart';
 import 'package:flame_nano_rpg/objects/damage.dart';
 import 'package:flutter/material.dart';
 

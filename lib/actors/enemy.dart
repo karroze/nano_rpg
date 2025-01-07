@@ -5,10 +5,11 @@ import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/extensions.dart';
-import 'package:flame_nano_rpg/actors/attackable.dart';
-import 'package:flame_nano_rpg/actors/attacking.dart';
+import 'package:flame_nano_rpg/actors/contracts/living.dart';
+import 'package:flame_nano_rpg/actors/contracts/attackable.dart';
+import 'package:flame_nano_rpg/actors/contracts/attacking.dart';
 import 'package:flame_nano_rpg/actors/explosion.dart';
-import 'package:flame_nano_rpg/actors/has_stamina.dart';
+import 'package:flame_nano_rpg/actors/contracts/has_stamina.dart';
 import 'package:flame_nano_rpg/actors/player.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flame_nano_rpg/objects/damage.dart';
@@ -23,7 +24,7 @@ enum EnemyState {
 }
 
 abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState>
-    with HasGameRef<NanoRpgGame>, KeyboardHandler, CollisionCallbacks, Attackable, Attacking, HasStamina {
+    with HasGameRef<NanoRpgGame>, KeyboardHandler, CollisionCallbacks, Living, Attackable, Attacking, HasStamina {
   Enemy({
     required super.position,
     required super.size,
