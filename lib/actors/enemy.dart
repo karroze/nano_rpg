@@ -28,18 +28,40 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasG
           anchor: Anchor.center,
         );
 
+  /// Movements
   @mustBeOverridden
   double get moveSpeed;
 
   @mustBeOverridden
   int get maxHealth;
 
-  double get visibilityRange => 150;
+  // @mustBeOverridden
+  int get maxStamina => 100;
 
-  int get walkingRange => 200;
+  /// Attack
+  //@mustBeOverridden
+  int get damage => 10;
+
+  //@mustBeOverridden
+  int get damageCooldown => 250;
+
+  //@mustBeOverridden
+  int get staminaPerHit => 25;
+
+  //@mustBeOverridden
+  double get staminaRegenTimeframeSeconds => 1;
+
+  //@mustBeOverridden
+  int get staminaRegenPerTimeframe => 10;
+
+  /// Ranges
+  double get visibilityRange => 200;
+
+  int get walkingRange => 100;
 
   double get attackRange => 25;
 
+  // Dimensions
   Vector2 get hitboxSize => Vector2(68, 64);
 
   late final SpriteAnimation idleAnimation;
@@ -49,9 +71,10 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasG
   late final SpriteAnimation dieAnimation;
 
   late final velocity = Vector2.zero();
-  late int health = maxHealth;
 
-  Vector2? walkPoint;
+  late int health = maxHealth;
+  late int stamina = maxStamina;
+  late double _staminaRegenTimerValue = staminaRegenTimeframeSeconds;
 
   bool isAttacking = false;
   bool isAttacked = false;
@@ -60,6 +83,7 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasG
   bool get isAlive => health > 0;
 
   Player? player;
+  Vector2? walkPoint;
 
   @override
   FutureOr<void> onLoad() {
@@ -137,87 +161,27 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasG
       0,
     );
 
+    // Handle stamina regeneration
+    _handleStamina(dt);
+
     // Find player if not set
     player ??= game.findByKeyName('player');
 
     // If there is a player
     if (player != null) {
-      // Get its position
-      final playerPosition = player!.position;
-      // Find distance
-      final distanceToPlayer = (playerPosition - position).length;
-
-      if (distanceToPlayer <= visibilityRange) {
-        lookAtTarget(playerPosition);
-      }
-
-      if (distanceToPlayer > visibilityRange && walkPoint == null) {
-        // _searchWalkPoint();
-      } else if (distanceToPlayer > walkingRange && distanceToPlayer <= visibilityRange) {
-        // lookAtTarget(playerPosition);
-      } else if (distanceToPlayer <= walkingRange && distanceToPlayer > attackRange) {
-        walkToTarget(player!);
-      }
+      _handlePlayerInteraction(player!);
     }
 
     // If there is a walk point
     if (walkPoint != null) {
-      // Go to point
-      final targetDirection = walkPoint! - position;
-
-      // If there, remove walk point
-      if (targetDirection.length <= attackRange) {
-        // walkPoint = null;
-        velocity.setValues(0, 0);
-      } else {
-        final isVelocityXZero = (targetDirection.x > 0 && targetDirection.x < 1) || (targetDirection.x < 0 && targetDirection.x > -1);
-        final isVelocityYZero = (targetDirection.y > 0 && targetDirection.y < 1) || (targetDirection.y < 0 && targetDirection.y > -1);
-        final velocityX = isVelocityXZero ? 0.0 : targetDirection.x / targetDirection.x.abs();
-        final velocityY = isVelocityYZero ? 0.0 : targetDirection.y / targetDirection.y.abs();
-
-        // print('Velocity: x: $velocityX y: $velocityY');
-
-        velocity.setValues(
-          velocityX,
-          velocityY,
-        );
-
-        // Calculate new position
-        final newPosX = position.x + velocity.x * moveSpeed * dt;
-        final newPosY = position.y + velocity.y * moveSpeed * dt;
-
-        // Set new position values
-        position.setValues(
-          newPosX,
-          newPosY,
-        );
-
-        // Look at target
-
-        lookAtTarget(walkPoint!);
-      }
+      _handleWalkPoint(
+        dt,
+        walkPoint: walkPoint!,
+      );
     }
 
     // Handle animations
-    // If attacked, do nothing
-    if (isAttacked) return super.update(dt);
-
-    // If attacking and not already started attack animation
-    if (isAttacking) {
-      // If there is an attacking in progress, do nothing
-      if (attackingInProgress) return super.update(dt);
-
-      current = [EnemyState.attack].random();
-      attackingInProgress = true;
-      return super.update(dt);
-    }
-
-    // Handle idle or walking
-    if (velocity.isZero()) {
-      current = EnemyState.idle;
-    } else {
-      current = EnemyState.walk;
-    }
+    _handleAnimation(dt);
 
     super.update(dt);
   }
@@ -278,6 +242,102 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasG
     if (scale.x != newScaleX) {
       // print('Changing scale');
       scale.x = newScaleX;
+    }
+  }
+
+  /// Handles stamina regeneration per timeframe, decided by passed [dt].
+  void _handleStamina(double dt) {
+    _staminaRegenTimerValue -= dt;
+    // If timer has fired and stamina is less than max
+    if (_staminaRegenTimerValue <= 0 && stamina < maxStamina) {
+      // Reset timer value
+      _staminaRegenTimerValue = staminaRegenTimeframeSeconds;
+      // Increase stamina by per timer timeframe value
+      stamina += staminaRegenPerTimeframe;
+      // Clamp between 0 and maxStamina value
+      stamina = stamina.clamp(0, maxStamina);
+    }
+  }
+
+  /// Handles interaction with a [player].
+  void _handlePlayerInteraction(Player player) {
+    // Get its position
+    final playerPosition = player.position;
+    // Find distance
+    final distanceToPlayer = (playerPosition - position).length;
+
+    if (distanceToPlayer <= visibilityRange) {
+      lookAtTarget(playerPosition);
+    }
+
+    if (distanceToPlayer > visibilityRange && walkPoint == null) {
+      // _searchWalkPoint();
+    } else if (distanceToPlayer > walkingRange && distanceToPlayer <= visibilityRange) {
+      lookAtTarget(playerPosition);
+    } else if (distanceToPlayer <= walkingRange && distanceToPlayer > attackRange) {
+      walkToTarget(player);
+    }
+  }
+
+  void _handleWalkPoint(
+    double dt, {
+    required Vector2 walkPoint,
+  }) {
+    // Go to point
+    final targetDirection = walkPoint - position;
+
+    // If there, remove walk point
+    if (targetDirection.length <= attackRange) {
+      // walkPoint = null;
+      velocity.setValues(0, 0);
+    } else {
+      final isVelocityXZero = (targetDirection.x > 0 && targetDirection.x < 1) || (targetDirection.x < 0 && targetDirection.x > -1);
+      final isVelocityYZero = (targetDirection.y > 0 && targetDirection.y < 1) || (targetDirection.y < 0 && targetDirection.y > -1);
+      final velocityX = isVelocityXZero ? 0.0 : targetDirection.x / targetDirection.x.abs();
+      final velocityY = isVelocityYZero ? 0.0 : targetDirection.y / targetDirection.y.abs();
+
+      // print('Velocity: x: $velocityX y: $velocityY');
+
+      velocity.setValues(
+        velocityX,
+        velocityY,
+      );
+
+      // Calculate new position
+      final newPosX = position.x + velocity.x * moveSpeed * dt;
+      final newPosY = position.y + velocity.y * moveSpeed * dt;
+
+      // Set new position values
+      position.setValues(
+        newPosX,
+        newPosY,
+      );
+
+      // Look at target
+      lookAtTarget(walkPoint);
+    }
+  }
+
+  /// Handles what animation to play
+  void _handleAnimation(double dt) {
+    // If attacked, do nothing
+    if (isAttacked) return super.update(dt);
+
+    // If attacking and not already started attack animation
+    if (isAttacking) {
+      // If there is an attacking in progress, do nothing
+      if (attackingInProgress) return super.update(dt);
+
+      current = [EnemyState.attack].random();
+      attackingInProgress = true;
+      return super.update(dt);
+    }
+
+    // Handle idle or walking
+    if (velocity.isZero()) {
+      current = EnemyState.idle;
+    } else {
+      current = EnemyState.walk;
     }
   }
 }
