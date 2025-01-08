@@ -21,8 +21,6 @@ abstract class EnemyNpcDefaultAnimated extends EnemyNpc<EnemyState> {
   SpriteAnimation get dieAnimation;
 
   SpriteAnimation get hurtAnimation;
-  
-  FutureOr<void> onDie() => null;
 
   @override
   Map<EnemyState, SpriteAnimation> setupAnimations() {

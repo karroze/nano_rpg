@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flame/extensions.dart';
 import 'package:flame_nano_rpg/actors/contracts/enemy_npc_default_animated.dart';
 import 'package:flame_nano_rpg/actors/enemies/enemy_state.dart';
+import 'package:flame_nano_rpg/actors/objects/explosion.dart';
 import 'package:flame_nano_rpg/actors/player.dart';
 
 abstract class EnemyNpcRegular extends EnemyNpcDefaultAnimated {
@@ -57,6 +58,18 @@ abstract class EnemyNpcRegular extends EnemyNpcDefaultAnimated {
 
     // Handle animations
     _handleAnimation(dt);
+  }
+
+  @override
+  FutureOr<void> onDie() {
+    game.add(
+      Explosion(
+        position: Vector2(
+          position.x,
+          position.y + size.y / 4,
+        ),
+      ),
+    );
   }
 
   FutureOr<void> _searchWalkPoint() async {

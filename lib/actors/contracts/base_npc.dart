@@ -6,11 +6,12 @@ import 'package:flame/sprite.dart';
 import 'package:flame_nano_rpg/actors/contracts/living.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 
-abstract class BaseNpc<State> extends SpriteAnimationGroupComponent<State> with HasGameRef<NanoRpgGame>, KeyboardHandler, CollisionCallbacks, Living {
-  BaseNpc({
+abstract class Character<State> extends SpriteAnimationGroupComponent<State> with HasGameRef<NanoRpgGame>, Living {
+  Character({
     required super.position,
     required super.size,
     required super.anchor,
+    super.key,
   });
 
   // Dimensions
@@ -24,6 +25,8 @@ abstract class BaseNpc<State> extends SpriteAnimationGroupComponent<State> with 
     required State state,
     required SpriteAnimationTicker ticker,
   });
+
+  FutureOr<void> onDie() => null;
 
   @override
   FutureOr<void> onLoad() async {
