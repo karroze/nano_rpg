@@ -7,13 +7,13 @@ import 'package:flame/effects.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame_nano_rpg/actors/contracts/attackable.dart';
 import 'package:flame_nano_rpg/actors/contracts/attacking.dart';
+import 'package:flame_nano_rpg/actors/contracts/attacking_with_cooldown.dart';
 import 'package:flame_nano_rpg/actors/contracts/has_stamina.dart';
 import 'package:flame_nano_rpg/actors/contracts/living.dart';
+import 'package:flame_nano_rpg/actors/contracts/moving.dart';
 import 'package:flame_nano_rpg/actors/explosion.dart';
 import 'package:flame_nano_rpg/actors/player.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
-import 'package:flame_nano_rpg/objects/damage.dart';
-import 'package:meta/meta.dart';
 
 enum EnemyState {
   idle,
@@ -24,7 +24,7 @@ enum EnemyState {
 }
 
 abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState>
-    with HasGameRef<NanoRpgGame>, KeyboardHandler, CollisionCallbacks, Living, Attackable, Attacking, HasStamina {
+    with HasGameRef<NanoRpgGame>, KeyboardHandler, CollisionCallbacks, Living, Moving, Attackable, Attacking, AttackingWithCooldown, HasStamina {
   Enemy({
     required super.position,
     required super.size,
@@ -32,23 +32,10 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState>
           anchor: Anchor.center,
         );
 
-  /// Movements
-  @mustBeOverridden
-  double get moveSpeed;
-
-  /// Attack
-  //@mustBeOverridden
-  int get damage => 10;
-
-  //@mustBeOverridden
-  double get damageCooldownTimeframeSeconds => 2;
-
   /// Ranges
   double get visibilityRange => 200;
 
   int get walkingRange => 100;
-
-  double get attackRange => 25;
 
   // Dimensions
   Vector2 get hitboxSize => Vector2(68, 64);
@@ -59,15 +46,12 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState>
   late final SpriteAnimation hurtAnimation;
   late final SpriteAnimation dieAnimation;
 
-  late final velocity = Vector2.zero();
-
-  late double _damageCooldownTimerValue = damageCooldownTimeframeSeconds;
-
   Player? player;
-  Vector2? walkPoint;
 
   @override
   FutureOr<void> onLoad() async {
+    super.onLoad();
+
     await _loadAnimations();
 
     // Add hitbox
@@ -81,43 +65,45 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState>
         anchor: Anchor.bottomCenter,
       ),
     );
-
-    return super.onLoad();
   }
 
   @override
   void update(double dt) {
+    super.update(dt);
+
     // Set vero velocity
     velocity.setValues(
       0,
       0,
     );
 
-    // Handle stamina regeneration
-    handleStamina(dt);
-    // Handle attacking cooldown
-    _handleAttackingCooldown(dt);
+    // Handle stamina updated and movement if is alive
+    if (isAlive) {
+      // Handle stamina regeneration
+      handleStamina(dt);
+      // Handle attacking cooldown
+      handleAttackingCooldown(dt);
 
-    // Find player if not set
-    player ??= game.findByKeyName('player');
+      // Find player if not set
+      player ??= game.findByKeyName('player');
 
-    // If there is a player
-    if (player != null) {
-      _handlePlayerInteraction(player!);
-    }
+      // If there is a player
+      if (player != null) {
+        _handlePlayerInteraction(player!);
+      }
 
-    // If there is a walk point
-    if (walkPoint != null) {
-      _handleWalkPoint(
-        dt,
-        walkPoint: walkPoint!,
-      );
+      // If there is a walk point
+      if (walkPoint != null && !isAttacking) {
+        handleWalkPoint(
+          dt,
+          walkPoint: walkPoint!,
+          endDistance: attackRange,
+        );
+      }
     }
 
     // Handle animations
     _handleAnimation(dt);
-
-    super.update(dt);
   }
 
   FutureOr<void> _searchWalkPoint() async {
@@ -128,7 +114,7 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState>
     // );
 
     print('Point: ${game.size / 2}');
-    print('Target: ${position + Vector2(400,0)}');
+    print('Target: ${position + Vector2(400, 0)}');
 
     walkToTarget(
       position +
@@ -150,63 +136,6 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState>
 
     // Set walk point with an offset
     walkPoint = target + Vector2(xOffset, yOffset);
-  }
-
-  @override
-  void receiveDamage({
-    required Damage damage,
-    required Attacking attacker,
-  }) {
-    super.receiveDamage(damage: damage, attacker: attacker);
-
-    if (isAttackingInProgress && isAlive) return;
-    // Get new state
-    final damageState = switch (isAlive) {
-      true => EnemyState.hurt,
-      false => EnemyState.die,
-    };
-    current = damageState;
-  }
-
-  @override
-  Damage dealDamage() => Damage.melee(
-        amount: damage,
-      );
-
-  void lookAtTarget(
-    Vector2 targetPosition,
-  ) {
-    // Do nothing if dead
-    if (!isAlive) return;
-
-    // Calculate new scale
-    final newScaleX = switch (targetPosition.x - position.x >= 5) {
-      true => 1.0,
-      false => -1.0,
-    };
-
-    // print('Current scale: ${scale.x}\tNew scale: $newScaleX');
-
-    // Change scale if new scale differs
-    if (scale.x != newScaleX) {
-      // print('Changing scale');
-      scale.x = newScaleX;
-    }
-  }
-
-  /// Handles attacking cooldown, decided by passing [dt].
-  void _handleAttackingCooldown(double dt) {
-    // Change timer value
-    _damageCooldownTimerValue -= dt;
-    // If timer has fired
-    if (_damageCooldownTimerValue <= 0) {
-      // Reset timer value
-      _damageCooldownTimerValue = damageCooldownTimeframeSeconds;
-      // Increase stamina by per timer timeframe value
-      canAttack = true;
-    } else {
-      canAttack = false;
-    }
   }
 
   /// Handles interaction with a [player].
@@ -231,58 +160,32 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState>
     }
   }
 
-  void _handleWalkPoint(
-    double dt, {
-    required Vector2 walkPoint,
-  }) {
-    // Go to point
-    final targetDirection = walkPoint - position;
-
-    // If there, remove walk point
-    if (targetDirection.length <= attackRange) {
-      this.walkPoint = null;
-      velocity.setValues(0, 0);
-    } else {
-      final isVelocityXZero = (targetDirection.x > 0 && targetDirection.x < 1) || (targetDirection.x < 0 && targetDirection.x > -1);
-      final isVelocityYZero = (targetDirection.y > 0 && targetDirection.y < 1) || (targetDirection.y < 0 && targetDirection.y > -1);
-      final velocityX = isVelocityXZero ? 0.0 : targetDirection.x / targetDirection.x.abs();
-      final velocityY = isVelocityYZero ? 0.0 : targetDirection.y / targetDirection.y.abs();
-
-      // print('Velocity: x: $velocityX y: $velocityY');
-
-      velocity.setValues(
-        velocityX,
-        velocityY,
-      );
-
-      // Calculate new position
-      final newPosX = position.x + velocity.x * moveSpeed * dt;
-      final newPosY = position.y + velocity.y * moveSpeed * dt;
-
-      // Set new position values
-      position.setValues(
-        newPosX,
-        newPosY,
-      );
-
-      // Look at target
-      lookAtTarget(walkPoint);
-    }
-  }
-
   /// Handles what animation to play.
   void _handleAnimation(double dt) {
-    // If attacked, do nothing
-    if (isAttacked) return super.update(dt);
+    // Set dead if not alive
+    if (!isAlive) {
+      current = EnemyState.die;
+      return;
+    }
 
-    // If attacking and not already started attack animation
+    // If attacked choose between hurt and dead animation based on if alive
+    if (isAttacked) {
+      // Get new state
+      final damageState = switch (isAlive) {
+        true => EnemyState.hurt,
+        false => EnemyState.die,
+      };
+      current = damageState;
+      return;
+    }
+
+    // If attacking
     if (isAttacking) {
       // If there is an attacking in progress, do nothing
-      if (isAttackingInProgress) return super.update(dt);
+      if (isAttackingInProgress) return;
 
       current = [EnemyState.attack].random();
-      isAttackingInProgress = true;
-      return super.update(dt);
+      return;
     }
 
     // Handle idle or walking
@@ -298,6 +201,7 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState>
     if (isAlive) {
       decreaseStaminaPerHit();
       attack(target: player);
+      canAttack = false;
     }
   }
 
@@ -314,13 +218,17 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState>
     };
 
     // Set attack animation tickers
-    animationTickers?[EnemyState.attack]?.onComplete = () {
-      isAttacking = false;
-      isAttackingInProgress = false;
-    };
+    animationTickers?[EnemyState.attack]
+      ?..onStart = () async {
+        isAttackingInProgress = true;
+      }
+      ..onComplete = () async {
+        isAttacking = false;
+        isAttackingInProgress = false;
+      };
     // Set hurt animation tickers
     animationTickers?[EnemyState.hurt]
-      ?..onStart = () {
+      ?..onStart = () async {
         add(
           OpacityEffect.fadeOut(
             EffectController(
@@ -331,7 +239,7 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState>
           ),
         );
       }
-      ..onComplete = () {
+      ..onComplete = () async {
         isAttacked = false;
         current = EnemyState.idle;
       };

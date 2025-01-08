@@ -11,10 +11,10 @@ import 'package:flame_nano_rpg/actors/contracts/eatable.dart';
 import 'package:flame_nano_rpg/actors/contracts/has_stamina.dart';
 import 'package:flame_nano_rpg/actors/contracts/healable.dart';
 import 'package:flame_nano_rpg/actors/contracts/living.dart';
+import 'package:flame_nano_rpg/actors/contracts/moving.dart';
 import 'package:flame_nano_rpg/actors/enemy.dart';
 import 'package:flame_nano_rpg/actors/tree.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
-import 'package:flame_nano_rpg/objects/damage.dart';
 import 'package:flutter/services.dart';
 
 enum PlayerState {
@@ -28,7 +28,7 @@ enum PlayerState {
 }
 
 final class Player extends SpriteAnimationGroupComponent<PlayerState>
-    with HasGameRef<NanoRpgGame>, KeyboardHandler, CollisionCallbacks, Living, Attacking, Attackable, HasStamina, Healable {
+    with HasGameRef<NanoRpgGame>, KeyboardHandler, CollisionCallbacks, Living, Attacking, Attackable, HasStamina, Healable, Moving {
   Player({
     required super.position,
   }) : super(
@@ -52,7 +52,24 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
   @override
   double get staminaRegenTimeframeSeconds => .5;
 
-  static const double moveSpeed = 50;
+  @override
+  double get moveSpeed => 50;
+
+  @override
+  double get moveDistance => 100;
+
+  @override
+  double get attackRange => 25;
+
+  @override
+  int get damageAmount => 25;
+
+  @override
+  int get critDamageAmount => 50;
+
+  @override
+  double get critChance => .2;
+
 
   late final idleAnimation = SpriteAnimation.fromFrameData(
     game.images.fromCache('player/warrior_1/idle.png'),
@@ -124,9 +141,6 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
 
   late final _enemyTargets = <Enemy>[];
 
-  final int damage = 25;
-
-  final velocity = Vector2.zero();
   final collisionDirection = Vector2.zero();
 
   @override
@@ -161,6 +175,9 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
 
   @override
   void update(double dt) {
+    super.update(dt);
+
+    // Handle stamina updated and movement if is alive
     if (isAlive) {
       handleStamina(dt);
       _handleUpdateMovement(dt);
@@ -170,8 +187,6 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
 
     _handleAnimation(dt);
     _disposeEnemyTargets();
-
-    super.update(dt);
   }
 
   @override
@@ -179,15 +194,23 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
     // Check that player is alive
     if (!isAlive) return super.onKeyEvent(event, keysPressed);
 
-    _handleMovement(keysPressed);
-    _handleCollisionDirection();
-    _handleAttacking(keysPressed);
+    final key = event.logicalKey;
 
-    return super.onKeyEvent(event, keysPressed);
+    final handledMovement = _handleMovement(keysPressed);
+    final handledCollision = _handleCollisionDirection();
+    final handledAttacking = _handleAttacking(key);
+
+    final handled = handledMovement || handledCollision || handledAttacking;
+
+    // Propagate handler further if no action was performed
+    if (!handled) return super.onKeyEvent(event, keysPressed);
+
+    return false;
   }
 
   @override
   void onCollisionStart(Set<Vector2> intersectionPoints, PositionComponent other) {
+    super.onCollisionStart(intersectionPoints, other);
     if (other is Eatable) {
       final wasEaten = (other as Eatable).eatBy(this);
       if (wasEaten) {
@@ -203,11 +226,12 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
         );
       }
     }
-    super.onCollisionStart(intersectionPoints, other);
   }
 
   @override
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
+    super.onCollision(intersectionPoints, other);
+
     if (other is Enemy) {
       final lookingAtEnemyOnRight = scale.x >= 1 && other.position.x >= position.x;
       final lookingAtEnemyOnLeft = scale.x < 1 && other.position.x < position.x;
@@ -222,52 +246,42 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
         targetDirection.y == 0 ? 0 : targetDirection.y / targetDirection.y.abs(),
       );
     }
-
-    super.onCollision(intersectionPoints, other);
   }
 
   @override
   void onCollisionEnd(PositionComponent other) {
+    super.onCollisionEnd(other);
     if (other is Tree) {
       collisionDirection.setValues(0, 0);
     }
-    super.onCollisionEnd(other);
   }
-
-  @override
-  void receiveDamage({
-    required Damage damage,
-    required Attacking attacker,
-  }) {
-    super.receiveDamage(damage: damage, attacker: attacker);
-
-    if (isAttackingInProgress && isAlive) return;
-    // Get new state
-    final damageState = switch (isAlive) {
-      true => PlayerState.hurt,
-      false => PlayerState.die,
-    };
-    current = damageState;
-  }
-
-  @override
-  Damage dealDamage() => Damage.melee(
-        amount: damage,
-      );
 
   /// Handles what animation to play.
   void _handleAnimation(double dt) {
-    // If attacked, do nothing
-    if (isAttacked) return super.update(dt);
+    // Set dead if not alive
+    if (!isAlive) {
+      current = PlayerState.die;
+      return;
+    }
+    // If attacked choose between hurt and dead animation based on if alive
+    if (isAttacked) {
+      // Get new state
+      final damageState = switch (isAlive) {
+        true => PlayerState.hurt,
+        false => PlayerState.die,
+      };
+      current = damageState;
+      return;
+    }
 
-    // Update animation state
+    // If attacking
     if (isAttacking) {
       // If there is an attacking in progress, do nothing
-      if (isAttackingInProgress) return super.update(dt);
+      if (isAttackingInProgress) return;
 
       // Choose random attack animation
       current = [PlayerState.attack1, PlayerState.attack2, PlayerState.attack3].random();
-      return super.update(dt);
+      return;
     }
 
     // Handle idle or walking
@@ -279,7 +293,9 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
   }
 
   /// Handles movement by processing keyboard [keysPressed]-s.
-  void _handleMovement(Set<LogicalKeyboardKey> keysPressed) {
+  ///
+  /// Returns true if movement was handled.
+  bool _handleMovement(Set<LogicalKeyboardKey> keysPressed) {
     // Check for X movement
     final diffX = switch (keysPressed) {
       final Set<LogicalKeyboardKey> keys when keys.contains(LogicalKeyboardKey.keyA) || keys.contains(LogicalKeyboardKey.arrowLeft) => -1.0,
@@ -295,41 +311,46 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
     };
 
     velocity.setValues(diffX, diffY);
+    return true;
   }
 
   /// Changes [velocity] based on presence and state of [collisionDirection].
-  void _handleCollisionDirection() {
+  bool _handleCollisionDirection() {
     if (velocity.x != 0 && velocity.y == 0) {
       if (velocity.x == collisionDirection.x) {
         velocity.setValues(0, 0);
       } else {
         velocity.setValues(velocity.x, 0);
       }
+      return true;
     } else if (velocity.x == 0 && velocity.y != 0) {
       if (velocity.y == collisionDirection.y) {
         velocity.setValues(0, 0);
       } else {
         velocity.setValues(0, velocity.y);
       }
+      return true;
     }
+
+    return false;
   }
 
   /// Handles attacking
-  void _handleAttacking(Set<LogicalKeyboardKey> keysPressed) {
+  bool _handleAttacking(LogicalKeyboardKey key) {
     // Set velocity to zero if there is a pending attack
     if (isAttacking) {
       velocity.setValues(0, 0);
-      return;
+      return false;
     }
 
     // Check if attack button was pressed
-    isAttacking = keysPressed.contains(LogicalKeyboardKey.keyE);
+    isAttacking = key == LogicalKeyboardKey.keyE;
     if (isAttacking) {
       // If not, set attacking to false and do nothing
       if (!hasStaminaForAttack) {
         isAttacking = false;
         isAttackingInProgress = false;
-        return;
+        return false;
       }
 
       // Set movement to zero
@@ -341,7 +362,10 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
       for (final enemyTarget in _enemyTargets) {
         attack(target: enemyTarget);
       }
+
+      return true;
     }
+    return false;
   }
 
   /// Updates player position with an update [dt] time.
@@ -373,36 +397,33 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
   void _setAnimationCallbacks() {
     // Set attack animations tickers
     animationTickers?[PlayerState.attack1]
-      ?..onStart = () {
+      ?..onStart = () async {
         isAttackingInProgress = true;
       }
-      ..onComplete = () {
+      ..onComplete = () async {
         isAttacking = false;
         isAttackingInProgress = false;
-        current = PlayerState.idle;
       };
     animationTickers?[PlayerState.attack2]
-      ?..onStart = () {
+      ?..onStart = () async {
         isAttackingInProgress = true;
       }
-      ..onComplete = () {
+      ..onComplete = () async {
         isAttacking = false;
         isAttackingInProgress = false;
-        current = PlayerState.idle;
       };
     animationTickers?[PlayerState.attack3]
-      ?..onStart = () {
+      ?..onStart = () async {
         isAttackingInProgress = true;
       }
-      ..onComplete = () {
+      ..onComplete = () async {
         isAttacking = false;
         isAttackingInProgress = false;
-        current = PlayerState.idle;
       };
 
     // Set hurt animation tickers callbacks
     animationTickers?[PlayerState.hurt]
-      ?..onStart = () {
+      ?..onStart = () async {
         add(
           OpacityEffect.fadeOut(
             EffectController(
@@ -413,9 +434,8 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
           ),
         );
       }
-      ..onComplete = () {
+      ..onComplete = () async {
         isAttacked = false;
-        current = PlayerState.idle;
       };
 
     // Set die animation tickers callbacks

@@ -15,8 +15,9 @@ mixin Attackable on Living {
   }) {
     // Toggle being attacked
     isAttacked = true;
-    // Receive damage
     // Decrease health
     health -= damage.amount;
+    // Clamp between 0 and max health
+    health = health.clamp(0, maxHealth);
   }
 }

@@ -9,9 +9,6 @@ final class EnemyOrcShaman extends Enemy {
   );
 
   @override
-  double moveSpeed = 50;
-
-  @override
   int get maxHealth => 100;
 
   @override
@@ -27,7 +24,22 @@ final class EnemyOrcShaman extends Enemy {
   double get staminaRegenTimeframeSeconds => 1;
 
   @override
-  int get damage => 10;
+  double get moveSpeed => 50;
+
+  @override
+  double get moveDistance => 100;
+
+  @override
+  double get attackRange => 25;
+
+  @override
+  int get damageAmount => 10;
+
+  @override
+  int get critDamageAmount => 15;
+
+  @override
+  double get critChance => .3;
 
   @override
   double get damageCooldownTimeframeSeconds => 1.5;

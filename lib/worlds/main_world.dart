@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flame/camera.dart';
 import 'package:flame/components.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame_nano_rpg/actors/enemy_orc_berserk.dart';
@@ -23,8 +24,6 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
 
   final map = <List<PositionComponent?>>[];
 
-  late final Player _player;
-
   @override
   FutureOr<void> onLoad() async {
     await _initialize(loadHud: true);
@@ -44,16 +43,44 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
   FutureOr<void> _initialize({
     required bool loadHud,
   }) async {
-    await _loadMap();
+    await _initializeMap();
+    // await _loadMap();
+    await _loadDebugEnemy();
     await _loadPlayer();
 
     if (loadHud) {
-      game.camera
+      game.camera = CameraComponent.withFixedResolution(
+        width: 720,
+        height: 600,
+      )
         ..viewfinder.anchor = Anchor.topLeft
-        ..viewport.add(Hud());
+        ..viewport = FixedResolutionViewport(
+          resolution: Vector2(
+            720,
+            600,
+          ),
+        )
+        ..add(Hud());
     }
 
     game.gameReset = false;
+  }
+
+  Future<void> _initializeMap() async {
+    // Get number of X and Y grid cells
+    final mapSizeX = (game.size.x / gridSize).ceil();
+    final maxSizeY = (game.size.y / gridSize).ceil();
+
+    // Iterate over
+    for (var i = 0; i < mapSizeX - 1; i++) {
+      // Add en empty list of maxSizeY size
+      map.add(
+        List.filled(
+          maxSizeY,
+          null,
+        ),
+      );
+    }
   }
 
   FutureOr<void> _loadMap() async {
@@ -81,19 +108,19 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
               position: spawnPosition,
             ),
           < 500 => [
-            MushroomBlueHat(
-              position: spawnPosition,
-            ),
-            MushroomEmerald(
-              position: spawnPosition,
-            ),
-            MushroomPurple(
-              position: spawnPosition,
-            ),
-            MushroomStringy(
-              position: spawnPosition,
-            ),
-          ].random(),
+              MushroomBlueHat(
+                position: spawnPosition,
+              ),
+              MushroomEmerald(
+                position: spawnPosition,
+              ),
+              MushroomPurple(
+                position: spawnPosition,
+              ),
+              MushroomStringy(
+                position: spawnPosition,
+              ),
+            ].random(),
           < 1000 => [
               EnemyOrcBerserk(
                 position: spawnPosition,
@@ -113,6 +140,23 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
         }
       }
     }
+  }
+
+  FutureOr<void> _loadDebugEnemy() async {
+    // Get number of X and Y grid cells
+    final mapSizeX = (game.size.x / gridSize).ceil();
+    final maxSizeY = (game.size.y / gridSize).ceil();
+    final i = (mapSizeX / 2).toInt();
+    final j = (maxSizeY / 2).toInt();
+    final xPosition = xOffset + i * gridSize.toDouble();
+    final yPosition = yOffset + j * gridSize.toDouble();
+
+    final spawnPosition = Vector2(xPosition, yPosition);
+    final enemy = EnemyOrcShaman(
+      position: spawnPosition,
+    );
+    game.add(enemy);
+    map[i][j] = enemy;
   }
 
   FutureOr<void> _loadPlayer() async {

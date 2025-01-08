@@ -12,14 +12,6 @@ final class Tree extends SpriteComponent with HasGameRef<NanoRpgGame>, Collision
           anchor: Anchor.center,
         );
 
-  final int maxHealth = 100;
-  late int health = maxHealth;
-
-  bool isAttacked = false;
-  bool attackingInProgress = false;
-
-  bool get isAlive => health > 0;
-
   @override
   FutureOr<void> onLoad() {
     // Load image from cache

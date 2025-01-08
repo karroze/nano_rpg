@@ -9,9 +9,6 @@ final class EnemyOrcBerserk extends Enemy {
         );
 
   @override
-  double moveSpeed = 50;
-
-  @override
   int get maxHealth => 100;
 
   @override
@@ -27,7 +24,22 @@ final class EnemyOrcBerserk extends Enemy {
   double get staminaRegenTimeframeSeconds => 1;
 
   @override
-  int get damage => 40;
+  double get moveSpeed => 25;
+
+  @override
+  double get moveDistance => 100;
+
+  @override
+  double get attackRange => 25;
+
+  @override
+  int get damageAmount => 40;
+
+  @override
+  int get critDamageAmount => 50;
+
+  @override
+  double get critChance => .15;
 
   @override
   double get damageCooldownTimeframeSeconds => 3;
