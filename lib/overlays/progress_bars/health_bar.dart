@@ -1,5 +1,5 @@
 import 'package:flame/components.dart';
-import 'package:flame_nano_rpg/overlays/labeled_progress_bar.dart';
+import 'package:flame_nano_rpg/overlays/progress_bars/labeled_progress_bar.dart';
 import 'package:flutter/material.dart';
 
 final class HealthBar extends LabeledProgressBar {

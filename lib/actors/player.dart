@@ -12,8 +12,8 @@ import 'package:flame_nano_rpg/actors/contracts/has_stamina.dart';
 import 'package:flame_nano_rpg/actors/contracts/healable.dart';
 import 'package:flame_nano_rpg/actors/contracts/living.dart';
 import 'package:flame_nano_rpg/actors/contracts/moving.dart';
-import 'package:flame_nano_rpg/actors/enemy.dart';
-import 'package:flame_nano_rpg/actors/tree.dart';
+import 'package:flame_nano_rpg/actors/enemies/enemy.dart';
+import 'package:flame_nano_rpg/actors/objects/tree.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flutter/services.dart';
 

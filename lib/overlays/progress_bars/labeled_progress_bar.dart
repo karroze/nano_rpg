@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flame/components.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
-import 'package:flame_nano_rpg/overlays/progress_bar.dart';
+import 'package:flame_nano_rpg/overlays/progress_bars/progress_bar.dart';
 import 'package:flutter/material.dart';
 
 abstract class LabeledProgressBar extends PositionComponent with HasGameRef<NanoRpgGame> {

@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:flame/components.dart';
 import 'package:flame_nano_rpg/actors/player.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
-import 'package:flame_nano_rpg/overlays/health_bar.dart';
-import 'package:flame_nano_rpg/overlays/labeled_progress_bar.dart';
-import 'package:flame_nano_rpg/overlays/stamina_bar.dart';
+import 'package:flame_nano_rpg/overlays/progress_bars/health_bar.dart';
+import 'package:flame_nano_rpg/overlays/progress_bars/labeled_progress_bar.dart';
+import 'package:flame_nano_rpg/overlays/progress_bars/stamina_bar.dart';
 
 final class Hud extends PositionComponent with HasGameRef<NanoRpgGame> {
   Hud({

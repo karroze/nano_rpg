@@ -1,5 +1,5 @@
 import 'package:flame/components.dart';
-import 'package:flame_nano_rpg/actors/enemy.dart';
+import 'package:flame_nano_rpg/actors/enemies/enemy.dart';
 
 final class EnemyOrcWarrior extends Enemy {
   EnemyOrcWarrior({
