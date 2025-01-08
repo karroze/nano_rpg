@@ -20,17 +20,18 @@ abstract mixin class HasStamina {
       // Reset timer value
       _staminaRegenTimerValue = staminaRegenTimeframeSeconds;
       // Increase stamina by per timer timeframe value
-      stamina += staminaRegenPerTimeframe;
-      // Clamp between 0 and maxStamina value
-      stamina = stamina.clamp(0, maxStamina);
+      _changeStamina(staminaRegenPerTimeframe);
     }
   }
 
-  void decreaseStamina(int value) {
-    stamina -= value;
-  }
+  void decreaseStamina(int value) => _changeStamina(-value);
 
-  void decreaseStaminaPerHit() {
-    stamina -= staminaPerHit;
+  void decreaseStaminaPerHit() => decreaseStamina(staminaPerHit);
+
+  void _changeStamina(int value) {
+    // Increase stamina by provided value
+    stamina += value;
+    // Clamp between 0 and maxStamina value
+    stamina = stamina.clamp(0, maxStamina);
   }
 }

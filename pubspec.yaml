@@ -20,6 +20,7 @@ flutter:
   assets:
     - assets/images/
     - assets/images/player/warrior_1/
+    - assets/images/player/warrior_2/
     - assets/images/enemies/orc_berserk/
     - assets/images/enemies/orc_shaman/
     - assets/images/enemies/orc_warrior/

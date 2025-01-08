@@ -2,13 +2,13 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flame/extensions.dart';
-import 'package:flame_nano_rpg/actors/enemies/enemy_npc_default_animated.dart';
-import 'package:flame_nano_rpg/actors/enemies/enemy_state.dart';
-import 'package:flame_nano_rpg/actors/objects/explosion.dart';
+import 'package:flame_nano_rpg/actors/contracts/enemy_npc.dart';
+import 'package:flame_nano_rpg/actors/npc/friendly_npc_default_animated.dart';
+import 'package:flame_nano_rpg/actors/npc/npc_state.dart';
 import 'package:flame_nano_rpg/actors/player.dart';
 
-abstract class EnemyNpcRegular extends EnemyNpcDefaultAnimated {
-  EnemyNpcRegular({
+abstract class FriendlyNpcRegular extends FriendlyNpcDefaultAnimated {
+  FriendlyNpcRegular({
     required super.position,
     required super.size,
     required super.anchor,
@@ -20,6 +20,8 @@ abstract class EnemyNpcRegular extends EnemyNpcDefaultAnimated {
   int get walkingRange => 100;
 
   Player? player;
+
+  late final _enemyTargets = <EnemyNpc<Object>>[];
 
   @override
   void update(double dt) {
@@ -44,6 +46,14 @@ abstract class EnemyNpcRegular extends EnemyNpcDefaultAnimated {
       // If there is a player
       if (player != null) {
         _handlePlayerInteraction(player!);
+
+        // Check if player has enemies
+        if(player!.enemyTargets.isNotEmpty) {
+          // Get last
+          final playerEnemy = player!.enemyTargets.last;
+          // Attack every enemy target
+          _handleEnemyInteraction(playerEnemy);
+        }
       }
 
       // If there is a walk point
@@ -58,18 +68,6 @@ abstract class EnemyNpcRegular extends EnemyNpcDefaultAnimated {
 
     // Handle animations
     _handleAnimation(dt);
-  }
-
-  @override
-  FutureOr<void> onDie() {
-    game.add(
-      Explosion(
-        position: Vector2(
-          position.x,
-          position.y + size.y / 4,
-        ),
-      ),
-    );
   }
 
   FutureOr<void> _searchWalkPoint() async {
@@ -108,9 +106,30 @@ abstract class EnemyNpcRegular extends EnemyNpcDefaultAnimated {
       lookAtTarget(playerPosition);
     } else if (distanceToPlayer <= walkingRange && distanceToPlayer > attackRange) {
       setWalkTarget(player.position);
-    } else if (distanceToPlayer <= attackRange && canAttack) {
+    }
+    // else if (distanceToPlayer <= attackRange && canAttack) {
+    //   attack(
+    //     target: player,
+    //   );
+    // }
+  }
+
+  /// Handles interaction with an [enemy].
+  void _handleEnemyInteraction(EnemyNpc<Object> enemy) {
+    // Get its position
+    final enemyPosition = enemy.position;
+    // Find distance
+    final distanceToEnemy = (enemyPosition - position).length - (enemy.size / 4).length;
+
+    // if (distanceToEnemy <= visibilityRange) {
+    //   lookAtTarget(enemyPosition);
+    // }
+
+    if (distanceToEnemy > attackRange) {
+      setWalkTarget(enemy.position);
+    } else if (distanceToEnemy <= attackRange && canAttack) {
       attack(
-        target: player,
+        target: enemy,
       );
     }
   }
@@ -119,7 +138,7 @@ abstract class EnemyNpcRegular extends EnemyNpcDefaultAnimated {
   void _handleAnimation(double dt) {
     // Set dead if not alive
     if (!isAlive) {
-      current = EnemyState.die;
+      current = NpcState.die;
       return;
     }
 
@@ -127,8 +146,8 @@ abstract class EnemyNpcRegular extends EnemyNpcDefaultAnimated {
     if (isAttacked) {
       // Get new state
       final damageState = switch (isAlive) {
-        true => EnemyState.hurt,
-        false => EnemyState.die,
+        true => NpcState.hurt,
+        false => NpcState.die,
       };
       current = damageState;
       return;
@@ -139,15 +158,15 @@ abstract class EnemyNpcRegular extends EnemyNpcDefaultAnimated {
       // If there is an attacking in progress, do nothing
       if (isAttackingInProgress) return;
 
-      current = [EnemyState.attack].random();
+      current = [NpcState.attack].random();
       return;
     }
 
     // Handle idle or walking
     if (velocity.isZero()) {
-      current = EnemyState.idle;
+      current = NpcState.idle;
     } else {
-      current = EnemyState.walk;
+      current = NpcState.walk;
     }
   }
 }

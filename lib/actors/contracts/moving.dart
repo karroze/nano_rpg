@@ -27,8 +27,8 @@ mixin Moving on PositionComponent, Living {
     } else {
       final isVelocityXZero = (targetDirection.x > 0 && targetDirection.x < 1) || (targetDirection.x < 0 && targetDirection.x > -1);
       final isVelocityYZero = (targetDirection.y > 0 && targetDirection.y < 1) || (targetDirection.y < 0 && targetDirection.y > -1);
-      final velocityX = isVelocityXZero ? 0.0 : targetDirection.x / targetDirection.x.abs();
-      final velocityY = isVelocityYZero ? 0.0 : targetDirection.y / targetDirection.y.abs();
+      final velocityX = isVelocityXZero || targetDirection.x == 0 ? 0.0 : targetDirection.x / targetDirection.x.abs();
+      final velocityY = isVelocityYZero || targetDirection.y == 0 ? 0.0 : targetDirection.y / targetDirection.y.abs();
 
       // print('Velocity: x: $velocityX y: $velocityY');
 
