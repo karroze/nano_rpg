@@ -16,7 +16,6 @@ import 'package:flame_nano_rpg/actors/contracts/healable.dart';
 import 'package:flame_nano_rpg/actors/contracts/living.dart';
 import 'package:flame_nano_rpg/actors/contracts/moving.dart';
 import 'package:flame_nano_rpg/actors/objects/tree.dart';
-import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flutter/services.dart';
 
 enum PlayerState {
@@ -74,35 +73,6 @@ final class Player extends Character<PlayerState> with KeyboardHandler, Collisio
   late final _enemyTargets = <EnemyNpc<Object>>[];
 
   final collisionDirection = Vector2.zero();
-
-  @override
-  FutureOr<void> onLoad() {
-    super.onLoad();
-    // Map states to animations
-    animations = {
-      PlayerState.idle: idleAnimation,
-      PlayerState.walk: walkAnimation,
-      PlayerState.attack1: attackAnimation1,
-      PlayerState.attack2: attackAnimation2,
-      PlayerState.attack3: attackAnimation3,
-      PlayerState.hurt: hurtAnimation,
-      PlayerState.die: dieAnimation,
-    };
-
-    _setAnimationCallbacks();
-
-    // Add hitbox
-    add(
-      RectangleHitbox(
-        size: Vector2(54, 50),
-        position: Vector2(
-          size.x / 2,
-          size.y,
-        ),
-        anchor: Anchor.bottomCenter,
-      ),
-    );
-  }
 
   @override
   void update(double dt) {
@@ -405,13 +375,13 @@ final class Player extends Character<PlayerState> with KeyboardHandler, Collisio
 
   @override
   FutureOr<void> setupAnimationTickers({
-    required EnemyState state,
+    required PlayerState state,
     required SpriteAnimationTicker ticker,
   }) {
     final _ = switch (state) {
-      EnemyState.attack => _setupAttackAnimationTicker(ticker),
-      EnemyState.hurt => _setupHurtAnimationTicker(ticker),
-      EnemyState.die => _setupDieAnimationTicker(ticker),
+      PlayerState.attack1 || PlayerState.attack2 || PlayerState.attack3 => _setupAttackAnimationTicker(ticker),
+      PlayerState.hurt => _setupHurtAnimationTicker(ticker),
+      PlayerState.die => _setupDieAnimationTicker(ticker),
       _ => null,
     };
   }
@@ -452,22 +422,19 @@ final class Player extends Character<PlayerState> with KeyboardHandler, Collisio
   /// Sets die animation ticker callbacks.
   FutureOr<void> _setupDieAnimationTicker(SpriteAnimationTicker ticker) async {
     ticker.onComplete = () async {
-      add(
-        OpacityEffect.fadeOut(
-          EffectController(
-            alternate: true,
-            duration: 0.25,
-            repeatCount: 3,
-          ),
-        ),
-      );
+      // Wait for some time
       await Future<void>.delayed(
         const Duration(
           milliseconds: 1250,
         ),
       );
+      // Apply grayscale decorator
+      decorator.addLast(
+        PaintDecorator.grayscale(
+          opacity: 0.5,
+        ),
+      );
       await onDie();
-      removeFromParent();
     };
   }
 

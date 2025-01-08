@@ -26,6 +26,8 @@ abstract class Character<State> extends SpriteAnimationGroupComponent<State> wit
     required SpriteAnimationTicker ticker,
   });
 
+  FutureOr<void> onDie() => null;
+
   @override
   FutureOr<void> onLoad() async {
     super.onLoad();
