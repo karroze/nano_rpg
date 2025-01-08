@@ -8,9 +8,9 @@ final class HealthBar extends LabeledProgressBar {
     required super.maxValue,
     required super.position,
   }) : super(
-    label: 'Health:',
-    progressColor: Colors.red,
-    bgColor: Colors.white,
-    size: Vector2(100, 20),
-  );
+          label: 'Health:',
+          progressColor: Colors.red,
+          bgColor: Colors.white,
+          size: Vector2(100, 20),
+        );
 }
