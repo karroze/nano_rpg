@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flame/components.dart';
 import 'package:flame_nano_rpg/actors/contracts/living.dart';
 
@@ -48,6 +50,22 @@ mixin Moving on PositionComponent, Living {
       // Look at target
       lookAtTarget(walkPoint);
     }
+  }
+
+  FutureOr<void> setWalkTarget(
+    Vector2 target, {
+    double endDistance = 0,
+  }) async {
+    // Do nothing if dead
+    if (!isAlive) return;
+
+    // Calculate X offset based on what side target is relative to enemy
+    final xOffset = target.x > position.x ? -endDistance : endDistance;
+    // Calculate Y offset based on what side target is relative to enemy
+    final yOffset = target.y > position.y ? endDistance : -endDistance;
+
+    // Set walk point with an offset
+    walkPoint = target + Vector2(xOffset, yOffset);
   }
 
   void lookAtTarget(

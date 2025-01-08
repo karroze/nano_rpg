@@ -116,26 +116,13 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState>
     print('Point: ${game.size / 2}');
     print('Target: ${position + Vector2(400, 0)}');
 
-    walkToTarget(
+    setWalkTarget(
       position +
           Vector2(
             randomX.toDouble(),
             0,
           ),
     );
-  }
-
-  FutureOr<void> walkToTarget(Vector2 target) async {
-    // Do nothing if dead
-    if (!isAlive) return;
-
-    // Calculate X offset based on what side target is relative to enemy
-    final xOffset = target.x > position.x ? -attackRange : attackRange;
-    // Calculate Y offset based on what side target is relative to enemy
-    final yOffset = target.y > position.y ? attackRange : -attackRange;
-
-    // Set walk point with an offset
-    walkPoint = target + Vector2(xOffset, yOffset);
   }
 
   /// Handles interaction with a [player].
@@ -154,7 +141,7 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState>
     } else if (distanceToPlayer > walkingRange && distanceToPlayer <= visibilityRange) {
       lookAtTarget(playerPosition);
     } else if (distanceToPlayer <= walkingRange && distanceToPlayer > attackRange) {
-      walkToTarget(player.position);
+      setWalkTarget(player.position);
     } else if (distanceToPlayer <= attackRange && canAttack) {
       _attackPlayer(player);
     }
