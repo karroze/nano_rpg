@@ -8,11 +8,11 @@ import 'package:flame/rendering.dart';
 import 'package:flame_nano_rpg/actors/contracts/attackable.dart';
 import 'package:flame_nano_rpg/actors/contracts/attacking.dart';
 import 'package:flame_nano_rpg/actors/contracts/eatable.dart';
+import 'package:flame_nano_rpg/actors/contracts/enemy_npc.dart';
 import 'package:flame_nano_rpg/actors/contracts/has_stamina.dart';
 import 'package:flame_nano_rpg/actors/contracts/healable.dart';
 import 'package:flame_nano_rpg/actors/contracts/living.dart';
 import 'package:flame_nano_rpg/actors/contracts/moving.dart';
-import 'package:flame_nano_rpg/actors/enemies/enemy.dart';
 import 'package:flame_nano_rpg/actors/objects/tree.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flutter/services.dart';
@@ -138,7 +138,7 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
     ),
   );
 
-  late final _enemyTargets = <Enemy>[];
+  late final _enemyTargets = <EnemyNpc<Object>>[];
 
   final collisionDirection = Vector2.zero();
 
@@ -230,7 +230,7 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
     super.onCollision(intersectionPoints, other);
 
-    if (other is Enemy) {
+    if (other is EnemyNpc<Object>) {
       final lookingAtEnemyOnRight = scale.x >= 1 && other.position.x >= position.x;
       final lookingAtEnemyOnLeft = scale.x < 1 && other.position.x < position.x;
       if (lookingAtEnemyOnRight || lookingAtEnemyOnLeft) {

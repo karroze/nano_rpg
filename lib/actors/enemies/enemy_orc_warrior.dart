@@ -1,11 +1,12 @@
 import 'package:flame/components.dart';
-import 'package:flame_nano_rpg/actors/enemies/enemy.dart';
+import 'package:flame_nano_rpg/actors/enemies/enemy_npc_regular.dart';
 
-final class EnemyOrcWarrior extends Enemy {
+final class EnemyOrcWarrior extends EnemyNpcRegular {
   EnemyOrcWarrior({
     required super.position,
   }) : super(
           size: Vector2(96, 96),
+          anchor: Anchor.center,
         );
 
   @override

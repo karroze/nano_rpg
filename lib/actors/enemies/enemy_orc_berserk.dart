@@ -1,11 +1,12 @@
 import 'package:flame/components.dart';
-import 'package:flame_nano_rpg/actors/enemies/enemy.dart';
+import 'package:flame_nano_rpg/actors/enemies/enemy_npc_regular.dart';
 
-final class EnemyOrcBerserk extends Enemy {
+final class EnemyOrcBerserk extends EnemyNpcRegular {
   EnemyOrcBerserk({
     required super.position,
   }) : super(
           size: Vector2(96, 96),
+          anchor: Anchor.center,
         );
 
   @override

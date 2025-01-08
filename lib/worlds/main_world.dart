@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:flame/camera.dart';
 import 'package:flame/components.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame_nano_rpg/actors/enemies/enemy_orc_berserk.dart';
@@ -11,8 +10,8 @@ import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom_blue_hat.dart';
 import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom_emerald.dart';
 import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom_purple.dart';
 import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom_stringy.dart';
-import 'package:flame_nano_rpg/actors/player.dart';
 import 'package:flame_nano_rpg/actors/objects/tree.dart';
+import 'package:flame_nano_rpg/actors/player.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flame_nano_rpg/overlays/hud.dart';
 

@@ -1,10 +1,10 @@
 import 'package:flame_nano_rpg/actors/contracts/attacking.dart';
 
 mixin AttackingWithCooldown on Attacking {
+  /// Time for damage cooldown.
   double get damageCooldownTimeframeSeconds;
 
-  bool canAttack = true;
-
+  // Current value in seconds of cooldown timer
   late double _damageCooldownTimerValue = damageCooldownTimeframeSeconds;
 
   /// Handles attacking cooldown, decided by passing [dt].

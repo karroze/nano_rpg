@@ -14,14 +14,17 @@ abstract mixin class Attacking {
   /// Chance of critical hit to happen.
   double get critChance;
 
-  /// Distance when attack is possible
+  /// Distance when attack is possible.
   double get attackRange;
 
-  /// Flag if is attacking
+  /// Flag if is attacking.
   bool isAttacking = false;
 
-  /// Flag if attacking is in progress
+  /// Flag if attacking is in progress.
   bool isAttackingInProgress = false;
+
+  /// Flag if attacking is possible.
+  bool canAttack = true;
 
   /// Method to produce an [Damage] object.
   Damage dealDamage() {
