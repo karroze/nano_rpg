@@ -140,6 +140,9 @@ final class Player extends Character<PlayerState>
       final lookingAtEnemyOnLeft = scale.x < 1 && other.position.x < position.x;
       if (lookingAtEnemyOnRight || lookingAtEnemyOnLeft) {
         // Add enemy to the enemies list
+        if(enemyTargets.contains(other)) {
+          enemyTargets.remove(other);
+        }
         enemyTargets.add(other);
       }
     } else if (other is Tree) {
