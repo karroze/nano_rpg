@@ -44,23 +44,14 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
     required bool loadHud,
   }) async {
     await _initializeMap();
-    // await _loadMap();
-    await _loadDebugEnemy();
+    await _loadMap();
+    // await _loadDebugEnemy();
     await _loadPlayer();
 
     if (loadHud) {
-      game.camera = CameraComponent.withFixedResolution(
-        width: 720,
-        height: 600,
-      )
+      game.camera
         ..viewfinder.anchor = Anchor.topLeft
-        ..viewport = FixedResolutionViewport(
-          resolution: Vector2(
-            720,
-            600,
-          ),
-        )
-        ..add(Hud());
+        ..viewport.add(Hud());
     }
 
     game.gameReset = false;

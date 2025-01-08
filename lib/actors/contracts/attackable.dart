@@ -7,6 +7,9 @@ mixin Attackable on Living {
   /// Flag if is currently attacked.
   bool isAttacked = false;
 
+  /// Flag if attacking is in progress
+  bool isAttackedInProgress = false;
+
   /// Method to receive a [damage] from an [attacker].
   @mustCallSuper
   void receiveDamage({

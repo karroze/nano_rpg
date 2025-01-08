@@ -9,7 +9,7 @@ final class EnemyOrcBerserk extends Enemy {
         );
 
   @override
-  int get maxHealth => 100;
+  int get maxHealth => 250;
 
   @override
   int get maxStamina => 100;
@@ -33,16 +33,16 @@ final class EnemyOrcBerserk extends Enemy {
   double get attackRange => 25;
 
   @override
-  int get damageAmount => 40;
+  int get damageAmount => 20;
 
   @override
-  int get critDamageAmount => 50;
+  int get critDamageAmount => 25;
 
   @override
   double get critChance => .15;
 
   @override
-  double get damageCooldownTimeframeSeconds => 3;
+  double get damageCooldownTimeframeSeconds => 2;
 
   @override
   SpriteAnimation get idleAnimation => SpriteAnimation.fromFrameData(

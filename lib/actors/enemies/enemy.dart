@@ -228,7 +228,8 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState>
       }
       ..onComplete = () async {
         isAttacked = false;
-        current = EnemyState.idle;
+        isAttacking = false;
+        isAttackedInProgress = false;
       };
 
     // Set die animation tickers

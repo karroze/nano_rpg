@@ -70,7 +70,6 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
   @override
   double get critChance => .2;
 
-
   late final idleAnimation = SpriteAnimation.fromFrameData(
     game.images.fromCache('player/warrior_1/idle.png'),
     SpriteAnimationData.sequenced(
@@ -145,6 +144,7 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
 
   @override
   FutureOr<void> onLoad() {
+    super.onLoad();
     // Map states to animations
     animations = {
       PlayerState.idle: idleAnimation,
@@ -169,8 +169,6 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
         anchor: Anchor.bottomCenter,
       ),
     );
-
-    return super.onLoad();
   }
 
   @override
@@ -203,9 +201,9 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
     final handled = handledMovement || handledCollision || handledAttacking;
 
     // Propagate handler further if no action was performed
-    if (!handled) return super.onKeyEvent(event, keysPressed);
+    if (!handled) return false;
 
-    return false;
+    return true;
   }
 
   @override
@@ -260,29 +258,40 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
   void _handleAnimation(double dt) {
     // Set dead if not alive
     if (!isAlive) {
+      // print('Animation handling: isAlive: false, setting PlayerState.die');
       current = PlayerState.die;
       return;
     }
+    // print('Animation handling: isAlive: true');
     // If attacked choose between hurt and dead animation based on if alive
     if (isAttacked) {
+      // print('Animation handling: isAttacked: true, isAttackedInProgress: $isAttackedInProgress');
+      // If there is an attacking in progress, do nothing
+      if (isAttackedInProgress || isAttackingInProgress) return;
       // Get new state
       final damageState = switch (isAlive) {
         true => PlayerState.hurt,
         false => PlayerState.die,
       };
+      // print('Animation handling: isAttacked: true, isAlive: $isAlive, setting state: $damageState');
       current = damageState;
       return;
     }
+    // print('Animation handling: isAttacked: false');
 
     // If attacking
     if (isAttacking) {
+      // print('Animation handling: isAttacking: true, isAttackingInProgress: $isAttackingInProgress');
       // If there is an attacking in progress, do nothing
       if (isAttackingInProgress) return;
 
       // Choose random attack animation
       current = [PlayerState.attack1, PlayerState.attack2, PlayerState.attack3].random();
+      // print('Animation handling: isAttacking: true, isAttackingInProgress: false, setting state: $current');
       return;
     }
+
+    // print('Animation handling: isAttacking: false');
 
     // Handle idle or walking
     if (velocity.isZero()) {
@@ -290,6 +299,8 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
     } else {
       current = PlayerState.walk;
     }
+
+    // print('Animation handling: setting state: $current');
   }
 
   /// Handles movement by processing keyboard [keysPressed]-s.
@@ -424,6 +435,7 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
     // Set hurt animation tickers callbacks
     animationTickers?[PlayerState.hurt]
       ?..onStart = () async {
+        // print('Animation: hurt: starting, iAttacked: $isAttacked');
         add(
           OpacityEffect.fadeOut(
             EffectController(
@@ -436,6 +448,9 @@ final class Player extends SpriteAnimationGroupComponent<PlayerState>
       }
       ..onComplete = () async {
         isAttacked = false;
+        isAttacking = false;
+        isAttackedInProgress = false;
+        // print('Animation: hurt: ending, iAttacked: $isAttacked, isAttackedInProgress: $isAttackedInProgress');
       };
 
     // Set die animation tickers callbacks
