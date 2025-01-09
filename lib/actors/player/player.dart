@@ -5,11 +5,11 @@ import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame/rendering.dart';
-import 'package:flame_nano_rpg/actors/animators/basic_npc_animator.dart';
+import 'package:flame_nano_rpg/actors/animators/simple_character_animator.dart';
 import 'package:flame_nano_rpg/actors/contracts/eatable.dart';
 import 'package:flame_nano_rpg/actors/contracts/healable.dart';
 import 'package:flame_nano_rpg/actors/contracts/npc_animator_callbacks.dart';
-import 'package:flame_nano_rpg/actors/enemies/simple_enemy_component.dart';
+import 'package:flame_nano_rpg/actors/npc/enemies/simple_enemy_component.dart';
 import 'package:flame_nano_rpg/actors/npc/base_npc_component.dart';
 import 'package:flame_nano_rpg/actors/objects/tree.dart';
 import 'package:flame_nano_rpg/actors/player/player_animator.dart';
@@ -108,7 +108,7 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
   }
 
   @override
-  FutureOr<BasicNpcAnimator<PlayerState>> provideAnimationGroupComponent() => PlayerAnimator(
+  FutureOr<SimpleCharacterAnimator<PlayerState>> provideAnimationGroupComponent() => PlayerAnimator(
         position: size / 2,
         size: size,
         anchor: Anchor.center,

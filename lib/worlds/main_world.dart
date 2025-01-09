@@ -3,14 +3,14 @@ import 'dart:math';
 
 import 'package:flame/components.dart';
 import 'package:flame/extensions.dart';
-import 'package:flame_nano_rpg/actors/enemies/orc_berserk/enemy_orc_berserk.dart';
-import 'package:flame_nano_rpg/actors/enemies/orc_shaman/enemy_orc_shaman.dart';
-import 'package:flame_nano_rpg/actors/enemies/orc_warrior/enemy_orc_warrior.dart';
+import 'package:flame_nano_rpg/actors/npc/enemies/orc_berserk/enemy_orc_berserk_component.dart';
+import 'package:flame_nano_rpg/actors/npc/enemies/orc_shaman/enemy_orc_shaman_component.dart';
+import 'package:flame_nano_rpg/actors/npc/enemies/orc_warrior/enemy_orc_warrior_component.dart';
 import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom_blue_hat.dart';
 import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom_emerald.dart';
 import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom_purple.dart';
 import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom_stringy.dart';
-import 'package:flame_nano_rpg/actors/npc/friendly_npc_warrior_component.dart';
+import 'package:flame_nano_rpg/actors/npc/friendly/friendly_warrior/friendly_warrior_component.dart';
 import 'package:flame_nano_rpg/actors/objects/tree.dart';
 import 'package:flame_nano_rpg/actors/player/player.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
@@ -135,10 +135,10 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
               EnemyOrcBerserkComponent(
                 position: spawnPosition,
               ),
-              EnemyOrcShaman(
+              EnemyOrcShamanComponent(
                 position: spawnPosition,
               ),
-              EnemyOrcWarrior(
+              EnemyOrcWarriorComponent(
                 position: spawnPosition,
               ),
             ].random(),
@@ -162,7 +162,7 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
     final yPosition = yOffset + j * gridSize.toDouble();
 
     final spawnPosition = Vector2(xPosition, yPosition);
-    final enemy = EnemyOrcShaman(
+    final enemy = EnemyOrcShamanComponent(
       position: spawnPosition,
     );
     await game.add(enemy);
@@ -178,7 +178,7 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
 
   FutureOr<void> _loadFriendlyNpc() async {
     await game.add(
-      FriendlyWarriorNpcComponent(
+      FriendlyWarriorComponent(
         position: game.size / 2 + Vector2(20, 0),
       ),
     );

@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:flame/components.dart';
 import 'package:flame/sprite.dart';
-import 'package:flame_nano_rpg/actors/animators/basic_npc_animator.dart';
+import 'package:flame_nano_rpg/actors/animators/simple_character_animator.dart';
 import 'package:flame_nano_rpg/actors/player/player_state.dart';
 
-final class PlayerAnimator extends BasicNpcAnimator<PlayerState> {
+final class PlayerAnimator extends SimpleCharacterAnimator<PlayerState> {
   PlayerAnimator({
     required super.position,
     required super.size,

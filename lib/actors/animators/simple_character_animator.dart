@@ -4,8 +4,8 @@ import 'package:flame/sprite.dart';
 import 'package:flame_nano_rpg/actors/animators/character_animator.dart';
 import 'package:flame_nano_rpg/actors/contracts/npc_animator_callbacks.dart';
 
-abstract class BasicNpcAnimator<State> extends CharacterAnimator<State> {
-  BasicNpcAnimator({
+abstract class SimpleCharacterAnimator<State> extends CharacterAnimator<State> {
+  SimpleCharacterAnimator({
     required super.position,
     required super.size,
     required super.anchor,

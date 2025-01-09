@@ -1,14 +1,14 @@
 import 'dart:async';
 
 import 'package:flame/components.dart';
-import 'package:flame_nano_rpg/actors/animators/basic_npc_animator.dart';
-import 'package:flame_nano_rpg/actors/enemies/enemy_state.dart';
-import 'package:flame_nano_rpg/actors/enemies/orc_shaman/enemy_orc_shaman_animator.dart';
-import 'package:flame_nano_rpg/actors/enemies/simple_enemy_component.dart';
+import 'package:flame_nano_rpg/actors/animators/simple_character_animator.dart';
+import 'package:flame_nano_rpg/actors/npc/enemies/enemy_state.dart';
+import 'package:flame_nano_rpg/actors/npc/enemies/orc_berserk/enemy_orc_berserk_animator.dart';
+import 'package:flame_nano_rpg/actors/npc/enemies/simple_enemy_component.dart';
 import 'package:flame_nano_rpg/objects/attack.dart';
 
-final class EnemyOrcShaman extends SimpleEnemyComponent {
-  EnemyOrcShaman({
+final class EnemyOrcBerserkComponent extends SimpleEnemyComponent {
+  EnemyOrcBerserkComponent({
     required super.position,
   }) : super(
           size: Vector2(96, 96),
@@ -16,22 +16,22 @@ final class EnemyOrcShaman extends SimpleEnemyComponent {
         );
 
   @override
-  int get maxHealth => 100;
+  int get maxHealth => 250;
 
   @override
   int get maxStamina => 100;
 
   @override
-  int get staminaPerHit => 20;
+  int get staminaPerHit => 50;
 
   @override
-  int get staminaRegenPerTimeframe => 10;
+  int get staminaRegenPerTimeframe => 5;
 
   @override
   double get staminaRegenTimeframeSeconds => 1;
 
   @override
-  double get moveSpeed => 50;
+  double get moveSpeed => 25;
 
   @override
   double get moveDistance => 100;
@@ -40,7 +40,7 @@ final class EnemyOrcShaman extends SimpleEnemyComponent {
   double get attackRange => 25;
 
   @override
-  double get damageCooldownTimeframeSeconds => 1.5;
+  double get damageCooldownTimeframeSeconds => 2;
 
   @override
   List<Attack> get availableAttacks => [
@@ -49,9 +49,9 @@ final class EnemyOrcShaman extends SimpleEnemyComponent {
 
   Attack get _simpleAttack => const Attack(
         title: 'Simple',
-        damage: 10,
-        damageCrit: 15,
-        critChance: .3,
+        damage: 20,
+        damageCrit: 25,
+        critChance: .15,
         range: 25,
       );
 
@@ -59,7 +59,7 @@ final class EnemyOrcShaman extends SimpleEnemyComponent {
   Attack chooseAttack() => _simpleAttack;
 
   @override
-  FutureOr<BasicNpcAnimator<EnemyState>> provideAnimationGroupComponent() => EnemyOrcShamanAnimator(
+  FutureOr<SimpleCharacterAnimator<EnemyState>> provideAnimationGroupComponent() => EnemyOrcBerserkAnimator(
         position: size / 2,
         size: size,
         anchor: Anchor.center,

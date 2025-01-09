@@ -1,14 +1,14 @@
 import 'dart:async';
 
 import 'package:flame/components.dart';
-import 'package:flame_nano_rpg/actors/animators/basic_npc_animator.dart';
-import 'package:flame_nano_rpg/actors/enemies/enemy_state.dart';
-import 'package:flame_nano_rpg/actors/enemies/orc_warrior/enemy_orc_warrior_animator.dart';
-import 'package:flame_nano_rpg/actors/enemies/simple_enemy_component.dart';
+import 'package:flame_nano_rpg/actors/animators/simple_character_animator.dart';
+import 'package:flame_nano_rpg/actors/npc/enemies/enemy_state.dart';
+import 'package:flame_nano_rpg/actors/npc/enemies/orc_warrior/enemy_orc_warrior_animator.dart';
+import 'package:flame_nano_rpg/actors/npc/enemies/simple_enemy_component.dart';
 import 'package:flame_nano_rpg/objects/attack.dart';
 
-final class EnemyOrcWarrior extends SimpleEnemyComponent {
-  EnemyOrcWarrior({
+final class EnemyOrcWarriorComponent extends SimpleEnemyComponent {
+  EnemyOrcWarriorComponent({
     required super.position,
   }) : super(
           size: Vector2(96, 96),
@@ -59,7 +59,7 @@ final class EnemyOrcWarrior extends SimpleEnemyComponent {
   Attack chooseAttack() => _simpleAttack;
 
   @override
-  FutureOr<BasicNpcAnimator<EnemyState>> provideAnimationGroupComponent() => EnemyOrcWarriorAnimator(
+  FutureOr<SimpleCharacterAnimator<EnemyState>> provideAnimationGroupComponent() => EnemyOrcWarriorAnimator(
         position: size / 2,
         size: size,
         anchor: Anchor.center,

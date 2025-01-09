@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:flame/sprite.dart';
-import 'package:flame_nano_rpg/actors/animators/basic_npc_animator.dart';
-import 'package:flame_nano_rpg/actors/enemies/enemy_state.dart';
+import 'package:flame_nano_rpg/actors/animators/simple_character_animator.dart';
+import 'package:flame_nano_rpg/actors/npc/enemies/enemy_state.dart';
 
-abstract class EnemyNpcAnimator extends BasicNpcAnimator<EnemyState> {
+abstract class EnemyNpcAnimator extends SimpleCharacterAnimator<EnemyState> {
   EnemyNpcAnimator({
     required super.position,
     required super.size,

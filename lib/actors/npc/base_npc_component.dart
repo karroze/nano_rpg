@@ -2,8 +2,7 @@ import 'dart:async';
 
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
-import 'package:flame_nano_rpg/actors/animators/basic_npc_animator.dart';
-import 'package:flame_nano_rpg/actors/animators/friendly_npc_animator.dart';
+import 'package:flame_nano_rpg/actors/animators/simple_character_animator.dart';
 import 'package:flame_nano_rpg/actors/contracts/attackable.dart';
 import 'package:flame_nano_rpg/actors/contracts/attacking.dart';
 import 'package:flame_nano_rpg/actors/contracts/attacking_with_cooldown.dart';
@@ -12,6 +11,7 @@ import 'package:flame_nano_rpg/actors/contracts/has_stamina.dart';
 import 'package:flame_nano_rpg/actors/contracts/living.dart';
 import 'package:flame_nano_rpg/actors/contracts/moving.dart';
 import 'package:flame_nano_rpg/actors/contracts/npc_animator_callbacks.dart';
+import 'package:flame_nano_rpg/actors/npc/friendly/friendly_npc_animator.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flame_nano_rpg/overlays/progress_bars/health_bar.dart';
 import 'package:flutter/material.dart';
@@ -27,7 +27,7 @@ abstract class BaseNpcComponent<State> extends PositionComponent
   });
 
   /// Provide initialized [FriendlyNpcAnimator] for npc.
-  FutureOr<BasicNpcAnimator<State>> provideAnimationGroupComponent();
+  FutureOr<SimpleCharacterAnimator<State>> provideAnimationGroupComponent();
 
   FutureOr<NpcAnimatorCallbacks?> provideAnimationCallbacks();
 
@@ -42,7 +42,7 @@ abstract class BaseNpcComponent<State> extends PositionComponent
   /// Provide hitbox size.
   Vector2 get hitboxSize;
 
-  late final BasicNpcAnimator<State> animator;
+  late final SimpleCharacterAnimator<State> animator;
   late final HealthBar healthBar;
 
   @override

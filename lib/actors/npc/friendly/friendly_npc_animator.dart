@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:flame/sprite.dart';
-import 'package:flame_nano_rpg/actors/animators/basic_npc_animator.dart';
-import 'package:flame_nano_rpg/actors/npc/npc_state.dart';
+import 'package:flame_nano_rpg/actors/animators/simple_character_animator.dart';
+import 'package:flame_nano_rpg/actors/npc/friendly/npc_state.dart';
 
-abstract class FriendlyNpcAnimator extends BasicNpcAnimator<NpcState> {
+abstract class FriendlyNpcAnimator extends SimpleCharacterAnimator<NpcState> {
   FriendlyNpcAnimator({
     required super.position,
     required super.size,
