@@ -233,8 +233,8 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
     isAttackingInProgress = false;
   }
 
-  FutureOr<void> onHurtStarted() {
-    animator.add(
+  FutureOr<void> onHurtStarted() async {
+    await animator.add(
       OpacityEffect.fadeOut(
         EffectController(
           alternate: true,

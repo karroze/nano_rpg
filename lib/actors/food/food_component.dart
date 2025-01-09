@@ -27,11 +27,11 @@ abstract class FoodComponent extends SpriteComponent with HasGameRef<NanoRpgGame
       );
 
   @override
-  FutureOr<void> onLoad() {
+  FutureOr<void> onLoad() async{
     sprite = Sprite(image);
 
     // Add hitbox
-    add(
+    await add(
       RectangleHitbox(
         size: Vector2(54, 50),
         position: Vector2(

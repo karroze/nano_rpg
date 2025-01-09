@@ -13,13 +13,13 @@ final class Tree extends SpriteComponent with HasGameRef<NanoRpgGame>, Collision
         );
 
   @override
-  FutureOr<void> onLoad() {
+  FutureOr<void> onLoad() async {
     // Load image from cache
     final image = game.images.fromCache('trees/tree/tree_2.png');
     // Assign it to the sprite
     sprite = Sprite(image);
 
-    add(
+    await add(
       RectangleHitbox(
         size: Vector2(48, 64),
         position: Vector2(

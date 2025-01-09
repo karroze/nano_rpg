@@ -27,7 +27,7 @@ final class NanoRpgGame extends FlameGame with HasCollisionDetection, HasKeyboar
 
     await _loadAssets();
 
-    add(router);
+    await add(router);
 
     return super.onLoad();
   }

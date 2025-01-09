@@ -190,7 +190,7 @@ final class FriendlyWarriorComponent extends BaseNpcComponent<NpcState> {
   FutureOr<void> onDieStarted() => null;
 
   FutureOr<void> onDieEnded() async {
-    animator.add(
+    await animator.add(
       OpacityEffect.fadeOut(
         EffectController(
           alternate: true,
@@ -208,8 +208,8 @@ final class FriendlyWarriorComponent extends BaseNpcComponent<NpcState> {
     removeFromParent();
   }
 
-  FutureOr<void> onHurtStarted() {
-    animator.add(
+  FutureOr<void> onHurtStarted() async {
+   await animator.add(
       OpacityEffect.fadeOut(
         EffectController(
           alternate: true,

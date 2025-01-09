@@ -112,7 +112,7 @@ abstract class SimpleEnemyComponent extends BaseNpcComponent<EnemyState> {
   FutureOr<void> onDieStarted() => null;
 
   FutureOr<void> onDieEnded() async {
-    animator.add(
+    await animator.add(
       OpacityEffect.fadeOut(
         EffectController(
           alternate: true,
@@ -130,8 +130,8 @@ abstract class SimpleEnemyComponent extends BaseNpcComponent<EnemyState> {
     removeFromParent();
   }
 
-  FutureOr<void> onHurtStarted() {
-    animator.add(
+  FutureOr<void> onHurtStarted() async {
+    await animator.add(
       OpacityEffect.fadeOut(
         EffectController(
           alternate: true,

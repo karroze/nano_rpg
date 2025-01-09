@@ -25,13 +25,14 @@ final class Hud extends PositionComponent with HasGameRef<NanoRpgGame> {
 
   @override
   FutureOr<void> onLoad() async {
+    super.onLoad();
     _healthBar = HealthBar(
       value: 0,
       maxValue: 0,
       position: Vector2(game.size.x - 250, 20),
       anchor: Anchor.center,
     );
-    add(_healthBar);
+    await add(_healthBar);
 
     _staminaBar = StaminaBar(
       value: 0,
@@ -39,9 +40,9 @@ final class Hud extends PositionComponent with HasGameRef<NanoRpgGame> {
       position: Vector2(game.size.x - 250, 45),
       anchor: Anchor.center,
     );
-    add(_staminaBar);
+    await add(_staminaBar);
 
-    add(
+    await add(
       FpsTextComponent(
         position: Vector2(
           20,
@@ -49,8 +50,6 @@ final class Hud extends PositionComponent with HasGameRef<NanoRpgGame> {
         ),
       ),
     );
-
-    return super.onLoad();
   }
 
   @override
