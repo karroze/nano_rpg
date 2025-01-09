@@ -1,4 +1,3 @@
-import 'package:flame_nano_rpg/actors/contracts/attackable.dart';
 
 final class Attack {
   const Attack({

@@ -5,36 +5,24 @@ import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame/rendering.dart';
-import 'package:flame/sprite.dart';
-import 'package:flame_nano_rpg/actors/contracts/attackable.dart';
-import 'package:flame_nano_rpg/actors/contracts/attacking.dart';
-import 'package:flame_nano_rpg/actors/contracts/attacking_with_stamina.dart';
-import 'package:flame_nano_rpg/actors/contracts/base_npc.dart';
+import 'package:flame_nano_rpg/actors/animators/basic_npc_animator.dart';
 import 'package:flame_nano_rpg/actors/contracts/eatable.dart';
-import 'package:flame_nano_rpg/actors/contracts/enemy_npc.dart';
-import 'package:flame_nano_rpg/actors/contracts/has_stamina.dart';
 import 'package:flame_nano_rpg/actors/contracts/healable.dart';
-import 'package:flame_nano_rpg/actors/contracts/living.dart';
-import 'package:flame_nano_rpg/actors/contracts/moving.dart';
+import 'package:flame_nano_rpg/actors/contracts/npc_animator_callbacks.dart';
+import 'package:flame_nano_rpg/actors/enemies/simple_enemy_component.dart';
+import 'package:flame_nano_rpg/actors/npc/base_npc_component.dart';
 import 'package:flame_nano_rpg/actors/objects/tree.dart';
+import 'package:flame_nano_rpg/actors/player/player_animator.dart';
+import 'package:flame_nano_rpg/actors/player/player_state.dart';
 import 'package:flame_nano_rpg/objects/attack.dart';
 import 'package:flutter/services.dart';
 
-enum PlayerState {
-  idle,
-  walk,
-  attack1,
-  attack2,
-  attack3,
-  hurt,
-  die;
-}
-
-final class Player extends Character<PlayerState> with KeyboardHandler, CollisionCallbacks, Living, Attacking, Attackable, HasStamina, Healable, Moving {
+final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, CollisionCallbacks, Healable {
   Player({
     required super.position,
   }) : super(
           key: ComponentKey.named('player'),
+          priority: 2,
           size: Vector2(96, 96),
           anchor: Anchor.center,
         );
@@ -77,27 +65,26 @@ final class Player extends Character<PlayerState> with KeyboardHandler, Collisio
       );
 
   @override
-  Attack chooseAttack() {
-    return _simpleAttack;
-  }
+  Attack chooseAttack() => _simpleAttack;
 
-  late final enemyTargets = <EnemyNpc<Object>>[];
+  @override
+  double get damageCooldownTimeframeSeconds => .1;
+
+  @override
+  Vector2 get hitboxSize => Vector2(68, 64);
+
+  late final enemyTargets = <SimpleEnemyComponent>[];
 
   final collisionDirection = Vector2.zero();
 
   @override
   void update(double dt) {
-    super.update(dt);
-
-    // Handle stamina updated and movement if is alive
+    // Handle movement if is alive
     if (isAlive) {
-      handleStamina(dt);
       _handleUpdateMovement(dt);
-    } else {
-      game.gameOver = true;
     }
 
-    _handleAnimation(dt);
+    super.update(dt);
     // _disposeEnemyTargets();
   }
 
@@ -109,16 +96,31 @@ final class Player extends Character<PlayerState> with KeyboardHandler, Collisio
     final key = event.logicalKey;
 
     final handledMovement = _handleMovement(keysPressed);
-    final handledCollision = _handleCollisionDirection();
+    // final handledCollision = _handleCollisionDirection();
     final handledAttacking = _handleAttacking(key);
 
-    final handled = handledMovement || handledCollision || handledAttacking;
+    final handled = handledMovement || handledAttacking;
 
     // Propagate handler further if no action was performed
     if (!handled) return false;
 
     return true;
   }
+
+  @override
+  FutureOr<BasicNpcAnimator<PlayerState>> provideAnimationGroupComponent() => PlayerAnimator(
+        position: size / 2,
+        size: size,
+        anchor: Anchor.center,
+      );
+
+  @override
+  FutureOr<NpcAnimatorCallbacks?> provideAnimationCallbacks() => NpcAnimatorCallbacks()
+    ..onAttackStarted = onAttackStarted
+    ..onAttackEnded = onAttackEnded
+    ..onHurtStarted = onHurtStarted
+    ..onHurtEnded = onHurtEnded
+    ..onDieEnded = onDieEnded;
 
   @override
   void onCollisionStart(Set<Vector2> intersectionPoints, PositionComponent other) {
@@ -144,7 +146,7 @@ final class Player extends Character<PlayerState> with KeyboardHandler, Collisio
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
     super.onCollision(intersectionPoints, other);
 
-    if (other is EnemyNpc<Object>) {
+    if (other is SimpleEnemyComponent) {
       final lookingAtEnemyOnRight = scale.x >= 1 && other.position.x >= position.x;
       final lookingAtEnemyOnLeft = scale.x < 1 && other.position.x < position.x;
       if (lookingAtEnemyOnRight || lookingAtEnemyOnLeft) {
@@ -168,185 +170,31 @@ final class Player extends Character<PlayerState> with KeyboardHandler, Collisio
     super.onCollisionEnd(other);
     if (other is Tree) {
       collisionDirection.setValues(0, 0);
-    } else if (other is EnemyNpc<Object>) {
+    } else if (other is SimpleEnemyComponent) {
       enemyTargets.remove(other);
     }
   }
 
-  @override
-  FutureOr<Map<PlayerState, SpriteAnimation>> setupAnimations() {
-    late final idleAnimation = SpriteAnimation.fromFrameData(
-      game.images.fromCache('player/warrior_1/idle.png'),
-      SpriteAnimationData.sequenced(
-        amount: 6,
-        stepTime: .2,
-        textureSize: Vector2.all(96),
-      ),
-    );
-
-    late final walkAnimation = SpriteAnimation.fromFrameData(
-      game.images.fromCache('player/warrior_1/walk.png'),
-      SpriteAnimationData.sequenced(
-        amount: 8,
-        stepTime: .2,
-        textureSize: Vector2.all(96),
-      ),
-    );
-
-    late final attackAnimation1 = SpriteAnimation.fromFrameData(
-      game.images.fromCache('player/warrior_1/attack_1.png'),
-      SpriteAnimationData.sequenced(
-        amount: 4,
-        stepTime: .2,
-        textureSize: Vector2.all(96),
-        loop: false,
-      ),
-    );
-
-    late final attackAnimation2 = SpriteAnimation.fromFrameData(
-      game.images.fromCache('player/warrior_1/attack_2.png'),
-      SpriteAnimationData.sequenced(
-        amount: 4,
-        stepTime: .2,
-        textureSize: Vector2.all(96),
-        loop: false,
-      ),
-    );
-
-    late final attackAnimation3 = SpriteAnimation.fromFrameData(
-      game.images.fromCache('player/warrior_1/attack_3.png'),
-      SpriteAnimationData.sequenced(
-        amount: 4,
-        stepTime: .2,
-        textureSize: Vector2.all(96),
-        loop: false,
-      ),
-    );
-
-    late final hurtAnimation = SpriteAnimation.fromFrameData(
-      game.images.fromCache('player/warrior_1/hurt.png'),
-      SpriteAnimationData.sequenced(
-        amount: 2,
-        stepTime: .2,
-        textureSize: Vector2.all(96),
-        loop: false,
-      ),
-    );
-
-    late final dieAnimation = SpriteAnimation.fromFrameData(
-      game.images.fromCache('player/warrior_1/dead.png'),
-      SpriteAnimationData.sequenced(
-        amount: 4,
-        stepTime: .2,
-        textureSize: Vector2.all(96),
-        loop: false,
-      ),
-    );
-
-    return {
-      PlayerState.idle: idleAnimation,
-      PlayerState.walk: walkAnimation,
-      PlayerState.attack1: attackAnimation1,
-      PlayerState.attack2: attackAnimation2,
-      PlayerState.attack3: attackAnimation3,
-      PlayerState.hurt: hurtAnimation,
-      PlayerState.die: dieAnimation,
-    };
-  }
-
-  @override
-  FutureOr<void> setupAnimationTickers({
-    required PlayerState state,
-    required SpriteAnimationTicker ticker,
-  }) {
-    final _ = switch (state) {
-      PlayerState.attack1 || PlayerState.attack2 || PlayerState.attack3 => _setupAttackAnimationTicker(ticker),
-      PlayerState.hurt => _setupHurtAnimationTicker(ticker),
-      PlayerState.die => _setupDieAnimationTicker(ticker),
-      _ => null,
-    };
-  }
-
-  /// Sets attack animation ticker callbacks.
-  FutureOr<void> _setupAttackAnimationTicker(SpriteAnimationTicker ticker) async {
-    ticker
-      ..onStart = () async {
-        isAttackingInProgress = true;
-      }
-      ..onComplete = () async {
-        isAttacking = false;
-        isAttackingInProgress = false;
-      };
-  }
-
-  /// Sets hurt animation ticker callbacks.
-  FutureOr<void> _setupHurtAnimationTicker(SpriteAnimationTicker ticker) async {
-    ticker
-      ..onStart = () async {
-        add(
-          OpacityEffect.fadeOut(
-            EffectController(
-              alternate: true,
-              duration: 0.125,
-              repeatCount: 2,
-            ),
-          ),
-        );
-      }
-      ..onComplete = () async {
-        isAttacked = false;
-        isAttacking = false;
-        isAttackedInProgress = false;
-      };
-  }
-
-  /// Sets die animation ticker callbacks.
-  FutureOr<void> _setupDieAnimationTicker(SpriteAnimationTicker ticker) async {
-    ticker.onComplete = () async {
-      // Wait for some time
-      await Future<void>.delayed(
-        const Duration(
-          milliseconds: 1250,
-        ),
-      );
-      // Apply grayscale decorator
-      decorator.addLast(
-        PaintDecorator.grayscale(
-          opacity: 0.5,
-        ),
-      );
-      await onDie();
-    };
-  }
-
-  /// Clears found enemy targets at the end of every update.
-  void _disposeEnemyTargets() {
-    // Clear enemy targets
-    enemyTargets.clear();
-  }
-
   /// Handles what animation to play.
-  void _handleAnimation(double dt) {
+  @override
+  PlayerState? provideStateUpdate(double dt) {
     // Set dead if not alive
     if (!isAlive) {
       // print('Animation handling: isAlive: false, setting PlayerState.die');
-      current = PlayerState.die;
-      return;
+      return PlayerState.die;
     }
     // print('Animation handling: isAlive: true');
     // If attacked choose between hurt and dead animation based on if alive
     if (isAttacked) {
       // print('Animation handling: isAttacked: true, isAttackedInProgress: $isAttackedInProgress');
       // If there is an attacking in progress, do nothing
-      if (isAttackedInProgress || isAttackingInProgress) return;
+      if (isAttackedInProgress || isAttackingInProgress) return null;
       // Get new state
-      final damageState = switch (isAlive) {
+      return switch (isAlive) {
         true => PlayerState.hurt,
         false => PlayerState.die,
       };
       // print('Animation handling: isAttacked: true, isAlive: $isAlive, setting state: $damageState');
-      current = damageState;
-      return;
     }
     // print('Animation handling: isAttacked: false');
 
@@ -354,24 +202,69 @@ final class Player extends Character<PlayerState> with KeyboardHandler, Collisio
     if (isAttacking) {
       // print('Animation handling: isAttacking: true, isAttackingInProgress: $isAttackingInProgress');
       // If there is an attacking in progress, do nothing
-      if (isAttackingInProgress) return;
+      if (isAttackingInProgress) return null;
 
-      // Choose random attack animation
-      current = [PlayerState.attack1, PlayerState.attack2, PlayerState.attack3].random();
       // print('Animation handling: isAttacking: true, isAttackingInProgress: false, setting state: $current');
-      return;
+      // Choose random attack animation
+      return [PlayerState.attack1, PlayerState.attack2, PlayerState.attack3].random();
     }
 
     // print('Animation handling: isAttacking: false');
 
     // Handle idle or walking
-    if (velocity.isZero()) {
-      current = PlayerState.idle;
-    } else {
-      current = PlayerState.walk;
-    }
+    return switch (velocity.isZero()) {
+      true => PlayerState.idle,
+      false => PlayerState.walk,
+    };
 
     // print('Animation handling: setting state: $current');
+  }
+
+  @override
+  void handleInteractions() {}
+
+  FutureOr<void> onAttackStarted() {
+    isAttackingInProgress = true;
+  }
+
+  FutureOr<void> onAttackEnded() {
+    isAttacking = false;
+    isAttackingInProgress = false;
+  }
+
+  FutureOr<void> onHurtStarted() {
+    animator.add(
+      OpacityEffect.fadeOut(
+        EffectController(
+          alternate: true,
+          duration: 0.125,
+          repeatCount: 2,
+        ),
+      ),
+    );
+  }
+
+  FutureOr<void> onHurtEnded() {
+    isAttacked = false;
+    isAttacking = false;
+    isAttackedInProgress = false;
+  }
+
+  FutureOr<void> onDieStarted() => null;
+
+  FutureOr<void> onDieEnded() async {
+    // Wait for some time
+    await Future<void>.delayed(
+      const Duration(
+        milliseconds: 1250,
+      ),
+    );
+    // Apply grayscale decorator
+    animator.decorator.addLast(
+      PaintDecorator.grayscale(
+        opacity: 0.5,
+      ),
+    );
   }
 
   /// Handles movement by processing keyboard [keysPressed]-s.
@@ -392,7 +285,10 @@ final class Player extends Character<PlayerState> with KeyboardHandler, Collisio
       _ => 0.0,
     };
 
-    velocity.setValues(diffX, diffY);
+    velocity.setValues(
+      diffX,
+      diffY,
+    );
     return true;
   }
 
@@ -415,6 +311,12 @@ final class Player extends Character<PlayerState> with KeyboardHandler, Collisio
     }
 
     return false;
+  }
+
+  /// Clears found enemy targets at the end of every update.
+  void _disposeEnemyTargets() {
+    // Clear enemy targets
+    enemyTargets.clear();
   }
 
   /// Handles attacking
@@ -463,10 +365,10 @@ final class Player extends Character<PlayerState> with KeyboardHandler, Collisio
     );
 
     // Control flip
-    final goesLeftLooksRight = velocity.x < 0 && scale.x > 0;
-    final goesRightLooksLeft = velocity.x > 0 && scale.x < 0;
+    final goesLeftLooksRight = velocity.x < 0 && animator.scale.x > 0;
+    final goesRightLooksLeft = velocity.x > 0 && animator.scale.x < 0;
     if (goesLeftLooksRight || goesRightLooksLeft) {
-      flipHorizontally();
+      animator.flipHorizontally();
     }
   }
 }

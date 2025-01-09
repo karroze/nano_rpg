@@ -1,81 +1,25 @@
 import 'dart:async';
 
-import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/extensions.dart';
-import 'package:flame_nano_rpg/actors/animators/basic_npc_animator.dart';
 import 'package:flame_nano_rpg/actors/contracts/npc_animator_callbacks.dart';
+import 'package:flame_nano_rpg/actors/enemies/enemy_state.dart';
 import 'package:flame_nano_rpg/actors/npc/base_npc_component.dart';
-import 'package:flame_nano_rpg/actors/npc/friendly_npc_default_animated.dart';
-import 'package:flame_nano_rpg/actors/npc/npc_state.dart';
 import 'package:flame_nano_rpg/actors/player/player.dart';
-import 'package:flame_nano_rpg/objects/attack.dart';
 
-final class FriendlyWarriorNpcComponent extends BaseNpcComponent<NpcState> {
-  FriendlyWarriorNpcComponent({
+abstract class SimpleEnemyComponent extends BaseNpcComponent<EnemyState> {
+  SimpleEnemyComponent({
     required super.position,
-  }) : super(
-          size: Vector2(96, 96),
-          anchor: Anchor.center,
-        );
+    required super.size,
+    required super.anchor,
+  });
 
   Player? player;
 
   @override
-  int get maxHealth => 250;
-
-  @override
-  int get maxStamina => 100;
-
-  @override
-  int get staminaPerHit => 20;
-
-  @override
-  int get staminaRegenPerTimeframe => 5;
-
-  @override
-  double get staminaRegenTimeframeSeconds => 1;
-
-  @override
-  double get moveSpeed => 25;
-
-  @override
-  double get moveDistance => 100;
-
-  double get visibilityRange => 150;
-
-  @override
-  double get attackRange => 25;
-
-  @override
-  double get damageCooldownTimeframeSeconds => 2;
-
-  // Dimensions
-  @override
   Vector2 get hitboxSize => Vector2(68, 64);
 
-  @override
-  List<Attack> get availableAttacks => [
-        _simpleAttack,
-      ];
-
-  Attack get _simpleAttack => const Attack(
-        title: 'Simple',
-        damage: 20,
-        damageCrit: 25,
-        critChance: .15,
-        range: 25,
-      );
-
-  @override
-  Attack chooseAttack() => _simpleAttack;
-
-  @override
-  FutureOr<BasicNpcAnimator<NpcState>> provideAnimationGroupComponent() => FriendlyWarAnimator(
-        position: size / 2,
-        size: size,
-        anchor: Anchor.center,
-      );
+  double get visibilityRange => 150;
 
   @override
   FutureOr<NpcAnimatorCallbacks?> provideAnimationCallbacks() => NpcAnimatorCallbacks()
@@ -86,18 +30,18 @@ final class FriendlyWarriorNpcComponent extends BaseNpcComponent<NpcState> {
     ..onDieEnded = onDieEnded;
 
   @override
-  NpcState? provideStateUpdate(double dt) {
+  EnemyState? provideStateUpdate(double dt) {
     // Set dead if not alive
     if (!isAlive) {
-      return NpcState.die;
+      return EnemyState.die;
     }
 
     // If attacked choose between hurt and dead animation based on if alive
     if (isAttacked) {
       // Get new state
       final damageState = switch (isAlive) {
-        true => NpcState.hurt,
-        false => NpcState.die,
+        true => EnemyState.hurt,
+        false => EnemyState.die,
       };
       return damageState;
     }
@@ -108,13 +52,13 @@ final class FriendlyWarriorNpcComponent extends BaseNpcComponent<NpcState> {
       if (isAttackingInProgress) return null;
 
       // Return random attack state
-      return [NpcState.attack].random();
+      return [EnemyState.attack].random();
     }
 
     // Handle idle or walking
     return switch (velocity.isZero()) {
-      true => NpcState.idle,
-      false => NpcState.walk,
+      true => EnemyState.idle,
+      false => EnemyState.walk,
     };
   }
 
@@ -127,14 +71,6 @@ final class FriendlyWarriorNpcComponent extends BaseNpcComponent<NpcState> {
     // If there is a player
     if (player != null) {
       _handlePlayerInteraction(player!);
-
-      // Check if player has enemies
-      if (player!.enemyTargets.isNotEmpty) {
-        // Get last
-        final playerEnemy = player!.enemyTargets.last;
-        // Attack every enemy target
-        _handleEnemyInteraction(playerEnemy);
-      }
     }
   }
 
@@ -155,30 +91,9 @@ final class FriendlyWarriorNpcComponent extends BaseNpcComponent<NpcState> {
       lookAtTarget(playerPosition);
     } else if (distanceToPlayer <= moveDistance && distanceToPlayer > attackRange) {
       setWalkTarget(player.position);
-    }
-    // else if (distanceToPlayer <= attackRange && canAttack) {
-    //   attack(
-    //     target: player,
-    //   );
-    // }
-  }
-
-  /// Handles interaction with an [enemy].
-  void _handleEnemyInteraction(BaseNpcComponent<Object> enemy) {
-    // Get its position
-    final enemyPosition = enemy.position;
-    // Find distance
-    final distanceToEnemy = (enemyPosition - position).length - (enemy.size / 4).length;
-
-    if (distanceToEnemy <= visibilityRange) {
-      lookAtTarget(enemyPosition);
-    }
-
-    if (distanceToEnemy > attackRange) {
-      setWalkTarget(enemy.position);
-    } else if (distanceToEnemy <= attackRange && canAttack) {
+    } else if (distanceToPlayer <= attackRange && canAttack) {
       attackTarget(
-        target: enemy,
+        target: player,
       );
     }
   }

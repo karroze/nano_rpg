@@ -1,57 +1,14 @@
 import 'package:flame/components.dart';
+import 'package:flame_nano_rpg/actors/animators/enemy_npc_animator.dart';
 import 'package:flame_nano_rpg/actors/enemies/enemy_npc_regular.dart';
 import 'package:flame_nano_rpg/objects/attack.dart';
 
-final class EnemyOrcShaman extends EnemyNpcRegular {
-  EnemyOrcShaman({
+final class EnemyOrcShamanAnimator extends EnemyNpcAnimator {
+  EnemyOrcShamanAnimator({
     required super.position,
-  }) : super(
-          size: Vector2(96, 96),
-          anchor: Anchor.center,
-        );
-
-  @override
-  int get maxHealth => 100;
-
-  @override
-  int get maxStamina => 100;
-
-  @override
-  int get staminaPerHit => 20;
-
-  @override
-  int get staminaRegenPerTimeframe => 10;
-
-  @override
-  double get staminaRegenTimeframeSeconds => 1;
-
-  @override
-  double get moveSpeed => 50;
-
-  @override
-  double get moveDistance => 100;
-
-  @override
-  double get attackRange => 25;
-
-  @override
-  double get damageCooldownTimeframeSeconds => 1.5;
-
-  @override
-  List<Attack> get availableAttacks => [
-        _simpleAttack,
-      ];
-
-  Attack get _simpleAttack => const Attack(
-        title: 'Simple',
-        damage: 10,
-        damageCrit: 15,
-        critChance: .3,
-        range: 25,
-      );
-
-  @override
-  Attack chooseAttack() => _simpleAttack;
+    required super.size,
+    required super.anchor,
+  });
 
   @override
   SpriteAnimation get idleAnimation => SpriteAnimation.fromFrameData(

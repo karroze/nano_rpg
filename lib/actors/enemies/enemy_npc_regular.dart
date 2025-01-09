@@ -6,7 +6,7 @@ import 'package:flame/extensions.dart';
 import 'package:flame_nano_rpg/actors/enemies/enemy_npc_default_animated.dart';
 import 'package:flame_nano_rpg/actors/enemies/enemy_state.dart';
 import 'package:flame_nano_rpg/actors/objects/explosion.dart';
-import 'package:flame_nano_rpg/actors/player.dart';
+import 'package:flame_nano_rpg/actors/player/player.dart';
 import 'package:flame_nano_rpg/overlays/progress_bars/health_bar.dart';
 import 'package:flutter/material.dart';
 

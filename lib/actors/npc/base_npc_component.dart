@@ -1,38 +1,41 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
-import 'package:flame/extensions.dart';
+import 'package:flame_nano_rpg/actors/animators/basic_npc_animator.dart';
+import 'package:flame_nano_rpg/actors/animators/friendly_npc_animator.dart';
 import 'package:flame_nano_rpg/actors/contracts/attackable.dart';
 import 'package:flame_nano_rpg/actors/contracts/attacking.dart';
 import 'package:flame_nano_rpg/actors/contracts/attacking_with_cooldown.dart';
 import 'package:flame_nano_rpg/actors/contracts/attacking_with_stamina.dart';
-import 'package:flame_nano_rpg/actors/contracts/enemy_npc.dart';
 import 'package:flame_nano_rpg/actors/contracts/has_stamina.dart';
 import 'package:flame_nano_rpg/actors/contracts/living.dart';
 import 'package:flame_nano_rpg/actors/contracts/moving.dart';
-import 'package:flame_nano_rpg/actors/npc/friendly_npc_default_animated.dart';
-import 'package:flame_nano_rpg/actors/npc/npc_state.dart';
+import 'package:flame_nano_rpg/actors/contracts/npc_animator_callbacks.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flame_nano_rpg/overlays/progress_bars/health_bar.dart';
 import 'package:flutter/material.dart';
 
-abstract class BaseNpcComponent extends PositionComponent
+abstract class BaseNpcComponent<State> extends PositionComponent
     with HasGameRef<NanoRpgGame>, Living, Moving, HasStamina, Attackable, Attacking, AttackingWithCooldown, AttackingWithStamina {
   BaseNpcComponent({
     required super.position,
     required super.size,
     required super.anchor,
+    super.key,
+    super.priority,
   });
 
   /// Provide initialized [FriendlyNpcAnimator] for npc.
-  FutureOr<FriendlyNpcAnimator> provideAnimationGroupComponent();
+  FutureOr<BasicNpcAnimator<State>> provideAnimationGroupComponent();
 
-  /// Provide [NpcState] update upon every update for [dt].
+  FutureOr<NpcAnimatorCallbacks?> provideAnimationCallbacks();
+
+
+  /// Provide [State] update upon every update for [dt].
   ///
   /// Return null if no state update is required.
-  NpcState? provideStateUpdate(double dt);
+  State? provideStateUpdate(double dt);
 
   /// Handle NPC interactions with other objects.
   void handleInteractions();
@@ -40,7 +43,7 @@ abstract class BaseNpcComponent extends PositionComponent
   /// Provide hitbox size.
   Vector2 get hitboxSize;
 
-  late final FriendlyNpcAnimator _npcAnimator;
+  late final BasicNpcAnimator<State> animator;
   late final HealthBar _healthBar;
 
   @override
@@ -49,8 +52,11 @@ abstract class BaseNpcComponent extends PositionComponent
     super.onLoad();
 
     // Get animator and add to the component
-    _npcAnimator = await provideAnimationGroupComponent();
-    await add(_npcAnimator);
+    animator = await provideAnimationGroupComponent();
+    // Set animator callbacks
+    animator.animatorCallbacks = await provideAnimationCallbacks();
+    // Add animator
+    await add(animator);
 
     // Setup ui
     await setupUi();
@@ -64,11 +70,11 @@ abstract class BaseNpcComponent extends PositionComponent
   void update(double dt) {
     super.update(dt);
 
-    // Set vero velocity
-    velocity.setValues(
-      0,
-      0,
-    );
+    // // Set vero velocity
+    // velocity.setValues(
+    //   0,
+    //   0,
+    // );
 
     // Handle stamina updated and movement if is alive
     if (isAlive) {
@@ -94,8 +100,8 @@ abstract class BaseNpcComponent extends PositionComponent
     _healthBar.value = health;
     // Update current animator state if update is not null
     final stateUpdate = provideStateUpdate(dt);
-    if(stateUpdate != null) {
-      _npcAnimator.current = stateUpdate;
+    if (stateUpdate != null) {
+      animator.current = stateUpdate;
     }
   }
 
@@ -113,8 +119,8 @@ abstract class BaseNpcComponent extends PositionComponent
     };
 
     // Change scale if new scale differs
-    if (_npcAnimator.scale.x != newScaleX) {
-      _npcAnimator.scale.x = newScaleX;
+    if (animator.scale.x != newScaleX) {
+      animator.scale.x = newScaleX;
     }
   }
 

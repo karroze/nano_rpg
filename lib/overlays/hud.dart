@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flame/components.dart';
-import 'package:flame_nano_rpg/actors/player.dart';
+import 'package:flame_nano_rpg/actors/player/player.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flame_nano_rpg/overlays/progress_bars/health_bar.dart';
 import 'package:flame_nano_rpg/overlays/progress_bars/labeled_progress_bar.dart';
