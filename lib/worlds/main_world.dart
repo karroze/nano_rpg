@@ -3,13 +3,13 @@ import 'dart:math';
 
 import 'package:flame/components.dart';
 import 'package:flame/extensions.dart';
-import 'package:flame_nano_rpg/actors/npc/enemies/orc_berserk/enemy_orc_berserk_component.dart';
-import 'package:flame_nano_rpg/actors/npc/enemies/orc_shaman/enemy_orc_shaman_component.dart';
-import 'package:flame_nano_rpg/actors/npc/enemies/orc_warrior/enemy_orc_warrior_component.dart';
 import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom_blue_hat.dart';
 import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom_emerald.dart';
 import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom_purple.dart';
 import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom_stringy.dart';
+import 'package:flame_nano_rpg/actors/npc/enemies/orc_berserk/enemy_orc_berserk_component.dart';
+import 'package:flame_nano_rpg/actors/npc/enemies/orc_shaman/enemy_orc_shaman_component.dart';
+import 'package:flame_nano_rpg/actors/npc/enemies/orc_warrior/enemy_orc_warrior_component.dart';
 import 'package:flame_nano_rpg/actors/npc/friendly/friendly_warrior/friendly_warrior_component.dart';
 import 'package:flame_nano_rpg/actors/objects/tree.dart';
 import 'package:flame_nano_rpg/actors/player/player.dart';

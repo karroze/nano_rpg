@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flame/extensions.dart';
 import 'package:flame_nano_rpg/actors/contracts/attackable.dart';
 import 'package:flame_nano_rpg/objects/attack.dart';
 import 'package:flame_nano_rpg/objects/damage.dart';
@@ -22,7 +23,8 @@ abstract mixin class Attacking {
   bool canAttack = true;
 
   /// Returns an [Attack] to perform.
-  Attack chooseAttack();
+  @mustCallSuper
+  Attack chooseAttack() => availableAttacks.random();
 
   /// Method to produce an [Damage] object.
   Damage dealDamage({Attack? attack}) {

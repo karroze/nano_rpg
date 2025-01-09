@@ -44,19 +44,14 @@ final class EnemyOrcWarriorComponent extends SimpleEnemyComponent {
 
   @override
   List<Attack> get availableAttacks => [
-        _simpleAttack,
+        const Attack(
+          title: 'Simple',
+          damage: 20,
+          damageCrit: 25,
+          critChance: .2,
+          range: 25,
+        ),
       ];
-
-  Attack get _simpleAttack => const Attack(
-        title: 'Simple',
-        damage: 20,
-        damageCrit: 25,
-        critChance: .2,
-        range: 25,
-      );
-
-  @override
-  Attack chooseAttack() => _simpleAttack;
 
   @override
   FutureOr<SimpleCharacterAnimator<EnemyState>> provideAnimationGroupComponent() => EnemyOrcWarriorAnimator(

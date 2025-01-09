@@ -56,19 +56,14 @@ final class FriendlyWarriorComponent extends BaseNpcComponent<NpcState> {
 
   @override
   List<Attack> get availableAttacks => [
-        _simpleAttack,
+        const Attack(
+          title: 'Simple',
+          damage: 20,
+          damageCrit: 25,
+          critChance: .15,
+          range: 25,
+        ),
       ];
-
-  Attack get _simpleAttack => const Attack(
-        title: 'Simple',
-        damage: 20,
-        damageCrit: 25,
-        critChance: .15,
-        range: 25,
-      );
-
-  @override
-  Attack chooseAttack() => _simpleAttack;
 
   @override
   FutureOr<SimpleCharacterAnimator<NpcState>> provideAnimationGroupComponent() => FriendlyWarriorAnimator(

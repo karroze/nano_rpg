@@ -9,8 +9,8 @@ import 'package:flame_nano_rpg/actors/animators/simple_character_animator.dart';
 import 'package:flame_nano_rpg/actors/contracts/eatable.dart';
 import 'package:flame_nano_rpg/actors/contracts/healable.dart';
 import 'package:flame_nano_rpg/actors/contracts/npc_animator_callbacks.dart';
-import 'package:flame_nano_rpg/actors/npc/enemies/simple_enemy_component.dart';
 import 'package:flame_nano_rpg/actors/npc/base_npc_component.dart';
+import 'package:flame_nano_rpg/actors/npc/enemies/simple_enemy_component.dart';
 import 'package:flame_nano_rpg/actors/objects/tree.dart';
 import 'package:flame_nano_rpg/actors/player/player_animator.dart';
 import 'package:flame_nano_rpg/actors/player/player_state.dart';
@@ -53,19 +53,14 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
 
   @override
   List<Attack> get availableAttacks => [
-        _simpleAttack,
+        const Attack(
+          title: 'Simple',
+          damage: 25,
+          damageCrit: 40,
+          critChance: .2,
+          range: 25,
+        ),
       ];
-
-  Attack get _simpleAttack => const Attack(
-        title: 'Simple',
-        damage: 25,
-        damageCrit: 40,
-        critChance: .2,
-        range: 25,
-      );
-
-  @override
-  Attack chooseAttack() => _simpleAttack;
 
   @override
   double get damageCooldownTimeframeSeconds => 0;
