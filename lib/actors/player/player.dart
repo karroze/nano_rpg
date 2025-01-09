@@ -34,13 +34,13 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
   int get maxStamina => 100;
 
   @override
-  int get staminaPerHit => 15;
+  int get staminaPerHit => 10;
 
   @override
-  int get staminaRegenPerTimeframe => 5;
+  int get staminaRegenPerTimeframe => 10;
 
   @override
-  double get staminaRegenTimeframeSeconds => 1;
+  double get staminaRegenTimeframeSeconds => .5;
 
   @override
   double get moveSpeed => 50;
@@ -68,7 +68,7 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
   Attack chooseAttack() => _simpleAttack;
 
   @override
-  double get damageCooldownTimeframeSeconds => .1;
+  double get damageCooldownTimeframeSeconds => 0;
 
   @override
   Vector2 get hitboxSize => Vector2(68, 64);
@@ -123,6 +123,12 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
     ..onDieEnded = onDieEnded;
 
   @override
+  FutureOr<void> setupUi() {
+    super.setupUi();
+    healthBar.removeFromParent();
+  }
+
+  @override
   void onCollisionStart(Set<Vector2> intersectionPoints, PositionComponent other) {
     super.onCollisionStart(intersectionPoints, other);
     if (other is Eatable) {
@@ -147,8 +153,8 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
     super.onCollision(intersectionPoints, other);
 
     if (other is SimpleEnemyComponent) {
-      final lookingAtEnemyOnRight = scale.x >= 1 && other.position.x >= position.x;
-      final lookingAtEnemyOnLeft = scale.x < 1 && other.position.x < position.x;
+      final lookingAtEnemyOnRight = animator.scale.x >= 1 && other.position.x >= position.x;
+      final lookingAtEnemyOnLeft = animator.scale.x < 1 && other.position.x < position.x;
       if (lookingAtEnemyOnRight || lookingAtEnemyOnLeft) {
         // Add enemy to the enemies list
         if (enemyTargets.contains(other)) {

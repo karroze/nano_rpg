@@ -43,7 +43,7 @@ abstract class BaseNpcComponent<State> extends PositionComponent
   Vector2 get hitboxSize;
 
   late final BasicNpcAnimator<State> animator;
-  late final HealthBar _healthBar;
+  late final HealthBar healthBar;
 
   @override
   @mustCallSuper
@@ -96,7 +96,7 @@ abstract class BaseNpcComponent<State> extends PositionComponent
     }
 
     // Update health bar value and position
-    _healthBar.value = health;
+    healthBar.value = health;
     // Update current animator state if update is not null
     final stateUpdate = provideStateUpdate(dt);
     if (stateUpdate != null) {
@@ -127,7 +127,7 @@ abstract class BaseNpcComponent<State> extends PositionComponent
   @mustCallSuper
   FutureOr<void> setupUi() async {
     // Initialize and add health bar above npc
-    _healthBar = HealthBar(
+    healthBar = HealthBar(
       size: Vector2(50, 10),
       value: health,
       maxValue: maxHealth,
@@ -142,7 +142,7 @@ abstract class BaseNpcComponent<State> extends PositionComponent
       ),
       anchor: Anchor.center,
     );
-    await add(_healthBar);
+    await add(healthBar);
   }
 
   /// Method to setup hitbox for the npc.

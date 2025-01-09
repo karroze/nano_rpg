@@ -12,7 +12,9 @@ abstract class SimpleEnemyComponent extends BaseNpcComponent<EnemyState> {
     required super.position,
     required super.size,
     required super.anchor,
-  });
+  }) : super(
+          priority: 3,
+        );
 
   Player? player;
 
