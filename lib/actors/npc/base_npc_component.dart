@@ -31,7 +31,6 @@ abstract class BaseNpcComponent<State> extends PositionComponent
 
   FutureOr<NpcAnimatorCallbacks?> provideAnimationCallbacks();
 
-
   /// Provide [State] update upon every update for [dt].
   ///
   /// Return null if no state update is required.

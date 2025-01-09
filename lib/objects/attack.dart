@@ -1,4 +1,3 @@
-
 final class Attack {
   const Attack({
     required this.title,

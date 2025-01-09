@@ -6,7 +6,6 @@ import 'package:flame_nano_rpg/objects/damage.dart';
 import 'package:flutter/material.dart';
 
 abstract mixin class Attacking {
-
   // TODO(georgii.savatkov): Remove
   double get attackRange;
 

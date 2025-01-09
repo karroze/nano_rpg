@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flame/components.dart';
 import 'package:flame_nano_rpg/actors/animators/basic_npc_animator.dart';
-import 'package:flame_nano_rpg/actors/enemies/enemy_npc_regular.dart';
 import 'package:flame_nano_rpg/actors/enemies/enemy_state.dart';
 import 'package:flame_nano_rpg/actors/enemies/orc_warrior/enemy_orc_warrior_animator.dart';
 import 'package:flame_nano_rpg/actors/enemies/simple_enemy_component.dart';

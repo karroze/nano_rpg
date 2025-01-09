@@ -1,7 +1,5 @@
 import 'package:flame/components.dart';
 import 'package:flame_nano_rpg/actors/animators/enemy_npc_animator.dart';
-import 'package:flame_nano_rpg/actors/enemies/enemy_npc_regular.dart';
-import 'package:flame_nano_rpg/objects/attack.dart';
 
 final class EnemyOrcWarriorAnimator extends EnemyNpcAnimator {
   EnemyOrcWarriorAnimator({

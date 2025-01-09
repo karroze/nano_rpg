@@ -53,19 +53,6 @@ abstract class LabeledProgressBar extends PositionComponent with HasGameRef<Nano
     );
   }
 
-  /// Position for health bar value label.
-  Vector2 _positionForHealthValueLabel() {
-    final posX = switch (_labelTextComponent) {
-          null => 0.0,
-          _ => _labelTextComponent!.size.x + 5,
-        } +
-        _healthProgressBar.size.x / 4;
-    return Vector2(
-      posX,
-      4,
-    );
-  }
-
   @override
   FutureOr<void> onLoad() async {
     super.onLoad();

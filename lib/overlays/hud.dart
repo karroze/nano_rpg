@@ -83,7 +83,7 @@ final class Hud extends PositionComponent with HasGameRef<NanoRpgGame> {
   void update(double dt) {
     // Find player if not set
     _player ??= game.findByKeyName('player');
-    if(_player != null) {
+    if (_player != null) {
       _healthBar
         ..value = _player!.health
         ..maxValue = _player!.maxHealth;

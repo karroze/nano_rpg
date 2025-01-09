@@ -1,26 +1,9 @@
 import 'dart:async';
 
-import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
-import 'package:flame/effects.dart';
-import 'package:flame/extensions.dart';
-import 'package:flame/rendering.dart';
 import 'package:flame/sprite.dart';
 import 'package:flame_nano_rpg/actors/animators/basic_npc_animator.dart';
-import 'package:flame_nano_rpg/actors/contracts/attackable.dart';
-import 'package:flame_nano_rpg/actors/contracts/attacking.dart';
-import 'package:flame_nano_rpg/actors/contracts/base_character.dart';
-import 'package:flame_nano_rpg/actors/contracts/eatable.dart';
-import 'package:flame_nano_rpg/actors/contracts/enemy_npc.dart';
-import 'package:flame_nano_rpg/actors/contracts/has_stamina.dart';
-import 'package:flame_nano_rpg/actors/contracts/healable.dart';
-import 'package:flame_nano_rpg/actors/contracts/living.dart';
-import 'package:flame_nano_rpg/actors/contracts/moving.dart';
-import 'package:flame_nano_rpg/actors/npc/base_npc_component.dart';
-import 'package:flame_nano_rpg/actors/objects/tree.dart';
 import 'package:flame_nano_rpg/actors/player/player_state.dart';
-import 'package:flame_nano_rpg/objects/attack.dart';
-import 'package:flutter/services.dart';
 
 final class PlayerAnimator extends BasicNpcAnimator<PlayerState> {
   PlayerAnimator({

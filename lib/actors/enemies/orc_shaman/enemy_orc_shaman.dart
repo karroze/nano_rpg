@@ -60,8 +60,8 @@ final class EnemyOrcShaman extends SimpleEnemyComponent {
 
   @override
   FutureOr<BasicNpcAnimator<EnemyState>> provideAnimationGroupComponent() => EnemyOrcShamanAnimator(
-    position: size / 2,
-    size: size,
-    anchor: Anchor.center,
-  );
+        position: size / 2,
+        size: size,
+        anchor: Anchor.center,
+      );
 }
