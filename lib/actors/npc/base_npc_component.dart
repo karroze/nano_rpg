@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
+import 'package:flame_nano_rpg/actors/animators/npc_animator_callbacks.dart';
 import 'package:flame_nano_rpg/actors/animators/simple_character_animator.dart';
 import 'package:flame_nano_rpg/actors/contracts/attackable.dart';
 import 'package:flame_nano_rpg/actors/contracts/attacking.dart';
@@ -10,7 +11,6 @@ import 'package:flame_nano_rpg/actors/contracts/attacking_with_stamina.dart';
 import 'package:flame_nano_rpg/actors/contracts/has_stamina.dart';
 import 'package:flame_nano_rpg/actors/contracts/living.dart';
 import 'package:flame_nano_rpg/actors/contracts/moving.dart';
-import 'package:flame_nano_rpg/actors/contracts/npc_animator_callbacks.dart';
 import 'package:flame_nano_rpg/actors/npc/friendly/friendly_npc_animator.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flame_nano_rpg/overlays/progress_bars/health_bar.dart';

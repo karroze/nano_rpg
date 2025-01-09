@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flame/effects.dart';
 import 'package:flame/extensions.dart';
-import 'package:flame_nano_rpg/actors/contracts/npc_animator_callbacks.dart';
+import 'package:flame_nano_rpg/actors/animators/npc_animator_callbacks.dart';
 import 'package:flame_nano_rpg/actors/npc/base_npc_component.dart';
 import 'package:flame_nano_rpg/actors/npc/enemies/enemy_state.dart';
 import 'package:flame_nano_rpg/actors/player/player.dart';

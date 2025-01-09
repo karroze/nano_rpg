@@ -18,8 +18,6 @@ final class Hud extends PositionComponent with HasGameRef<NanoRpgGame> {
     super.priority = 5,
   });
 
-  late TextComponent _scoreTextComponent;
-
   late final LabeledProgressBar _healthBar;
   late final StaminaBar _staminaBar;
 
@@ -27,30 +25,6 @@ final class Hud extends PositionComponent with HasGameRef<NanoRpgGame> {
 
   @override
   FutureOr<void> onLoad() async {
-    // _scoreTextComponent = TextComponent(
-    //   text: 'Score: 0',
-    //   textRenderer: TextPaint(
-    //     style: const TextStyle(
-    //       fontSize: 32,
-    //       color: Colors.white,
-    //     ),
-    //   ),
-    //   anchor: Anchor.bottomLeft,
-    //   position: Vector2(
-    //     20,
-    //     game.size.y - 20,
-    //   ),
-    // );
-    // add(_scoreTextComponent);
-
-    // add(
-    //   HealthComponent(
-    //     position: Vector2(
-    //       game.size.x - 150,
-    //       20,
-    //     ),
-    //   ),
-    // );
     _healthBar = HealthBar(
       value: 0,
       maxValue: 0,

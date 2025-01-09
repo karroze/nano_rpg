@@ -2,15 +2,19 @@ import 'dart:async';
 
 import 'package:flame/components.dart';
 import 'package:flame/sprite.dart';
+import 'package:flame_nano_rpg/actors/animators/animator_callbacks.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 
-abstract class CharacterAnimator<State> extends SpriteAnimationGroupComponent<State> with HasGameRef<NanoRpgGame> {
-  CharacterAnimator({
+abstract class BaseCharacterAnimator<State, Callbacks extends AnimatorCallbacks> extends SpriteAnimationGroupComponent<State> with HasGameRef<NanoRpgGame> {
+  BaseCharacterAnimator({
     required super.position,
     required super.size,
     required super.anchor,
     super.key,
+    this.animatorCallbacks,
   });
+
+  Callbacks? animatorCallbacks;
 
   /// Method to provide a map of [State]] to [SpriteAnimation] entries.
   FutureOr<Map<State, SpriteAnimation>> setupAnimations();

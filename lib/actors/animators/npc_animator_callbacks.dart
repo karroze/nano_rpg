@@ -1,6 +1,8 @@
 import 'dart:async';
 
-final class NpcAnimatorCallbacks {
+import 'package:flame_nano_rpg/actors/animators/animator_callbacks.dart';
+
+final class NpcAnimatorCallbacks extends AnimatorCallbacks {
   NpcAnimatorCallbacks({
     this.onAttackStarted,
     this.onAttackEnded,

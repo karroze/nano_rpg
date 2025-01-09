@@ -1,18 +1,16 @@
 import 'dart:async';
 
 import 'package:flame/sprite.dart';
-import 'package:flame_nano_rpg/actors/animators/character_animator.dart';
-import 'package:flame_nano_rpg/actors/contracts/npc_animator_callbacks.dart';
+import 'package:flame_nano_rpg/actors/animators/base_character_animator.dart';
+import 'package:flame_nano_rpg/actors/animators/npc_animator_callbacks.dart';
 
-abstract class SimpleCharacterAnimator<State> extends CharacterAnimator<State> {
+abstract class SimpleCharacterAnimator<State> extends BaseCharacterAnimator<State, NpcAnimatorCallbacks> {
   SimpleCharacterAnimator({
     required super.position,
     required super.size,
     required super.anchor,
-    this.animatorCallbacks,
+    super.animatorCallbacks,
   });
-
-  NpcAnimatorCallbacks? animatorCallbacks;
 
   /// Sets attack animation ticker callbacks.
   FutureOr<void> setupAttackAnimationTicker(SpriteAnimationTicker ticker) {
