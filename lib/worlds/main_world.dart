@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flame/camera.dart';
 import 'package:flame/components.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame_nano_rpg/actors/enemies/enemy_orc_berserk.dart';
@@ -10,7 +11,8 @@ import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom_blue_hat.dart';
 import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom_emerald.dart';
 import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom_purple.dart';
 import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom_stringy.dart';
-import 'package:flame_nano_rpg/actors/npc/friendly_warrior.dart';
+import 'package:flame_nano_rpg/actors/npc/friendly_npc_regular.dart';
+import 'package:flame_nano_rpg/actors/npc/friendly_npc_warrior_component.dart';
 import 'package:flame_nano_rpg/actors/objects/tree.dart';
 import 'package:flame_nano_rpg/actors/player.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
@@ -23,6 +25,8 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
   static const yOffset = 60;
 
   final map = <List<PositionComponent?>>[];
+
+  late final Player player;
 
   @override
   FutureOr<void> onLoad() async {
@@ -50,6 +54,22 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
     await _loadFriendlyNpc();
 
     if (loadHud) {
+      // final viewport = FixedSizeViewport(
+      //   800,
+      //   600,
+      // )..add(Hud());
+      // final cameraComponent = CameraComponent.withFixedResolution(
+      //   world: this,
+      //   width: 800,
+      //   height: 600,
+      // )
+      //   ..viewfinder.anchor = Anchor.topLeft
+      //   ..viewport = viewport;
+      //   // ..follow(
+      //   //   player,
+      //   //   snap: true,
+      //   // );
+      // game.camera = cameraComponent;
       game.camera
         ..viewfinder.anchor = Anchor.topLeft
         ..viewport.add(Hud());
@@ -128,7 +148,7 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
         };
         if (objectToSpawn != null) {
           map[i][j] = objectToSpawn;
-          game.add(objectToSpawn);
+          await game.add(objectToSpawn);
         }
       }
     }
@@ -138,7 +158,7 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
     // Get number of X and Y grid cells
     final mapSizeX = (game.size.x / gridSize).ceil();
     final maxSizeY = (game.size.y / gridSize).ceil();
-    final i = (mapSizeX / 2).toInt();
+    final i = (mapSizeX / 2).toInt() + 2;
     final j = (maxSizeY / 2).toInt();
     final xPosition = xOffset + i * gridSize.toDouble();
     final yPosition = yOffset + j * gridSize.toDouble();
@@ -147,21 +167,20 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
     final enemy = EnemyOrcShaman(
       position: spawnPosition,
     );
-    game.add(enemy);
+    await game.add(enemy);
     map[i][j] = enemy;
   }
 
   FutureOr<void> _loadPlayer() async {
-    game.add(
-      Player(
-        position: game.size / 2,
-      ),
+    player = Player(
+      position: game.size / 2,
     );
+    await game.add(player);
   }
 
-  FutureOr<void> _loadFriendlyNpc() {
-    game.add(
-      FriendlyWarrior(
+  FutureOr<void> _loadFriendlyNpc() async {
+    await game.add(
+      FriendlyWarriorNpcComponent(
         position: game.size / 2 + Vector2(20, 0),
       ),
     );

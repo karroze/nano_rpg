@@ -1,21 +1,17 @@
 import 'dart:math';
 
 import 'package:flame_nano_rpg/actors/contracts/attackable.dart';
+import 'package:flame_nano_rpg/objects/attack.dart';
 import 'package:flame_nano_rpg/objects/damage.dart';
 import 'package:flutter/material.dart';
 
 abstract mixin class Attacking {
-  /// Amount of damage to be produced during a normal hit.
-  int get damageAmount;
 
-  /// Amount of damage to be produced during a critical hit.
-  int get critDamageAmount;
-
-  /// Chance of critical hit to happen.
-  double get critChance;
-
-  /// Distance when attack is possible.
+  // TODO(georgii.savatkov): Remove
   double get attackRange;
+
+  /// List of attacks available.
+  List<Attack> get availableAttacks;
 
   /// Flag if is attacking.
   bool isAttacking = false;
@@ -26,18 +22,25 @@ abstract mixin class Attacking {
   /// Flag if attacking is possible.
   bool canAttack = true;
 
+  /// Returns an [Attack] to perform.
+  Attack chooseAttack();
+
   /// Method to produce an [Damage] object.
-  Damage dealDamage() {
-    final isCritical = Random().nextDouble() > critChance;
-    return Damage.melee(
-      amount: isCritical ? critDamageAmount : damageAmount,
+  Damage dealDamage({Attack? attack}) {
+    // Choose attack if no specific attack was provided
+    attack ??= chooseAttack();
+    final isCritical = Random().nextDouble() > attack.critChance;
+    return Damage(
+      amount: isCritical ? attack.damageCrit : attack.damage,
+      attack: attack,
     );
   }
 
   /// Method to attack the [target].
   @mustCallSuper
-  void attack({
+  void attackTarget({
     required Attackable target,
+    Attack? attack,
   }) {
     // Check that target is alive
     if (!target.isAlive) return;
@@ -45,7 +48,9 @@ abstract mixin class Attacking {
     isAttacking = true;
     // Damage target
     target.receiveDamage(
-      damage: dealDamage(),
+      damage: dealDamage(
+        attack: attack,
+      ),
       attacker: this,
     );
   }

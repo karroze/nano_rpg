@@ -1,5 +1,6 @@
 import 'package:flame/components.dart';
 import 'package:flame_nano_rpg/actors/enemies/enemy_npc_regular.dart';
+import 'package:flame_nano_rpg/objects/attack.dart';
 
 final class EnemyOrcBerserk extends EnemyNpcRegular {
   EnemyOrcBerserk({
@@ -34,16 +35,23 @@ final class EnemyOrcBerserk extends EnemyNpcRegular {
   double get attackRange => 25;
 
   @override
-  int get damageAmount => 20;
-
-  @override
-  int get critDamageAmount => 25;
-
-  @override
-  double get critChance => .15;
-
-  @override
   double get damageCooldownTimeframeSeconds => 2;
+
+  @override
+  List<Attack> get availableAttacks => [
+        _simpleAttack,
+      ];
+
+  Attack get _simpleAttack => const Attack(
+        title: 'Simple',
+        damage: 20,
+        damageCrit: 25,
+        critChance: .15,
+        range: 25,
+      );
+
+  @override
+  Attack chooseAttack() => _simpleAttack;
 
   @override
   SpriteAnimation get idleAnimation => SpriteAnimation.fromFrameData(

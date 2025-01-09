@@ -7,6 +7,7 @@ final class StaminaBar extends LabeledProgressBar {
     required super.value,
     required super.maxValue,
     required super.position,
+    required super.anchor,
   }) : super(
           label: 'Stamina:',
           progressColor: Colors.green,

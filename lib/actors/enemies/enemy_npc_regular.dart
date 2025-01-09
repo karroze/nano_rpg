@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flame/components.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame_nano_rpg/actors/enemies/enemy_npc_default_animated.dart';
 import 'package:flame_nano_rpg/actors/enemies/enemy_state.dart';
 import 'package:flame_nano_rpg/actors/objects/explosion.dart';
 import 'package:flame_nano_rpg/actors/player.dart';
+import 'package:flame_nano_rpg/overlays/progress_bars/health_bar.dart';
+import 'package:flutter/material.dart';
 
 abstract class EnemyNpcRegular extends EnemyNpcDefaultAnimated {
   EnemyNpcRegular({
@@ -20,6 +23,28 @@ abstract class EnemyNpcRegular extends EnemyNpcDefaultAnimated {
   int get walkingRange => 100;
 
   Player? player;
+
+  late final HealthBar _healthBar;
+
+  @override
+  FutureOr<void> onLoad() {
+    super.onLoad();
+
+    _healthBar = HealthBar(
+      size: Vector2(50, 10),
+      value: health,
+      maxValue: maxHealth,
+      position: Vector2(25, 0),
+      showLabel: false,
+      valueTextStyle: const TextStyle(
+        fontSize: 8,
+        color: Colors.black,
+      ),
+      anchor: Anchor.center,
+    );
+
+    add(_healthBar);
+  }
 
   @override
   void update(double dt) {
@@ -56,13 +81,17 @@ abstract class EnemyNpcRegular extends EnemyNpcDefaultAnimated {
       }
     }
 
+    // Update health bar value and position
+    _healthBar.value = health;
+
     // Handle animations
     _handleAnimation(dt);
   }
 
   @override
-  FutureOr<void> onDie() {
-    game.add(
+  FutureOr<void> onDie() async {
+    _healthBar.removeFromParent();
+    await game.add(
       Explosion(
         position: Vector2(
           position.x,
@@ -109,7 +138,7 @@ abstract class EnemyNpcRegular extends EnemyNpcDefaultAnimated {
     } else if (distanceToPlayer <= walkingRange && distanceToPlayer > attackRange) {
       setWalkTarget(player.position);
     } else if (distanceToPlayer <= attackRange && canAttack) {
-      attack(
+      attackTarget(
         target: player,
       );
     }

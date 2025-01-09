@@ -1,29 +1,66 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flame/collisions.dart';
+import 'package:flame/components.dart';
 import 'package:flame/extensions.dart';
+import 'package:flame_nano_rpg/actors/contracts/attackable.dart';
+import 'package:flame_nano_rpg/actors/contracts/attacking.dart';
+import 'package:flame_nano_rpg/actors/contracts/attacking_with_cooldown.dart';
+import 'package:flame_nano_rpg/actors/contracts/attacking_with_stamina.dart';
 import 'package:flame_nano_rpg/actors/contracts/enemy_npc.dart';
+import 'package:flame_nano_rpg/actors/contracts/has_stamina.dart';
+import 'package:flame_nano_rpg/actors/contracts/living.dart';
+import 'package:flame_nano_rpg/actors/contracts/moving.dart';
 import 'package:flame_nano_rpg/actors/npc/friendly_npc_default_animated.dart';
 import 'package:flame_nano_rpg/actors/npc/npc_state.dart';
-import 'package:flame_nano_rpg/actors/player.dart';
+import 'package:flame_nano_rpg/nano_rpg_game.dart';
+import 'package:flame_nano_rpg/overlays/progress_bars/health_bar.dart';
+import 'package:flutter/material.dart';
 
-abstract class FriendlyNpcRegular extends FriendlyNpcDefaultAnimated {
-  FriendlyNpcRegular({
+abstract class BaseNpcComponent extends PositionComponent
+    with HasGameRef<NanoRpgGame>, Living, Moving, HasStamina, Attackable, Attacking, AttackingWithCooldown, AttackingWithStamina {
+  BaseNpcComponent({
     required super.position,
     required super.size,
     required super.anchor,
   });
 
-  /// Ranges
-  double get visibilityRange => 200;
+  /// Provide initialized [FriendlyNpcAnimator] for npc.
+  FutureOr<FriendlyNpcAnimator> provideAnimationGroupComponent();
 
-  int get walkingRange => 100;
+  /// Provide [NpcState] update upon every update for [dt].
+  ///
+  /// Return null if no state update is required.
+  NpcState? provideStateUpdate(double dt);
 
-  Player? player;
+  /// Handle NPC interactions with other objects.
+  void handleInteractions();
 
-  late final _enemyTargets = <EnemyNpc<Object>>[];
+  /// Provide hitbox size.
+  Vector2 get hitboxSize;
+
+  late final FriendlyNpcAnimator _npcAnimator;
+  late final HealthBar _healthBar;
 
   @override
+  @mustCallSuper
+  FutureOr<void> onLoad() async {
+    super.onLoad();
+
+    // Get animator and add to the component
+    _npcAnimator = await provideAnimationGroupComponent();
+    await add(_npcAnimator);
+
+    // Setup ui
+    await setupUi();
+
+    // Add hitbox
+    await setupHitbox();
+  }
+
+  @override
+  @mustCallSuper
   void update(double dt) {
     super.update(dt);
 
@@ -40,21 +77,8 @@ abstract class FriendlyNpcRegular extends FriendlyNpcDefaultAnimated {
       // Handle attacking cooldown
       handleAttackingCooldown(dt);
 
-      // Find player if not set
-      player ??= game.findByKeyName('player');
-
-      // If there is a player
-      if (player != null) {
-        _handlePlayerInteraction(player!);
-
-        // Check if player has enemies
-        if(player!.enemyTargets.isNotEmpty) {
-          // Get last
-          final playerEnemy = player!.enemyTargets.last;
-          // Attack every enemy target
-          _handleEnemyInteraction(playerEnemy);
-        }
-      }
+      // Handle NPC interactions
+      handleInteractions();
 
       // If there is a walk point
       if (walkPoint != null && !isAttacking) {
@@ -66,107 +90,71 @@ abstract class FriendlyNpcRegular extends FriendlyNpcDefaultAnimated {
       }
     }
 
-    // Handle animations
-    _handleAnimation(dt);
+    // Update health bar value and position
+    _healthBar.value = health;
+    // Update current animator state if update is not null
+    final stateUpdate = provideStateUpdate(dt);
+    if(stateUpdate != null) {
+      _npcAnimator.current = stateUpdate;
+    }
   }
 
-  FutureOr<void> _searchWalkPoint() async {
-    final randomX = -walkingRange + Random().nextInt(walkingRange);
+  @override
+  void lookAtTarget(
+    Vector2 targetPosition,
+  ) {
+    // Do nothing if dead
+    if (!isAlive) return;
 
-    // walkToTarget(
-    //   game.size / 2,
-    // );
+    // Calculate new scale
+    final newScaleX = switch (targetPosition.x - position.x >= 5) {
+      true => 1.0,
+      false => -1.0,
+    };
 
-    print('Point: ${game.size / 2}');
-    print('Target: ${position + Vector2(400, 0)}');
+    // Change scale if new scale differs
+    if (_npcAnimator.scale.x != newScaleX) {
+      _npcAnimator.scale.x = newScaleX;
+    }
+  }
 
-    setWalkTarget(
-      position +
-          Vector2(
-            randomX.toDouble(),
-            0,
-          ),
+  /// Method to initialize npc UI.
+  @mustCallSuper
+  FutureOr<void> setupUi() async {
+    // Initialize and add health bar above npc
+    _healthBar = HealthBar(
+      size: Vector2(50, 10),
+      value: health,
+      maxValue: maxHealth,
+      position: Vector2(
+        size.x / 2,
+        25,
+      ),
+      showLabel: false,
+      valueTextStyle: const TextStyle(
+        fontSize: 8,
+        color: Colors.black,
+      ),
+      anchor: Anchor.center,
     );
+    await add(_healthBar);
   }
 
-  /// Handles interaction with a [player].
-  void _handlePlayerInteraction(Player player) {
-    // Get its position
-    final playerPosition = player.position;
-    // Find distance
-    final distanceToPlayer = (playerPosition - position).length - (player.size / 4).length;
-
-    if (distanceToPlayer <= visibilityRange) {
-      lookAtTarget(playerPosition);
-    }
-
-    if (distanceToPlayer > visibilityRange && walkPoint == null) {
-      // _searchWalkPoint();
-    } else if (distanceToPlayer > walkingRange && distanceToPlayer <= visibilityRange) {
-      lookAtTarget(playerPosition);
-    } else if (distanceToPlayer <= walkingRange && distanceToPlayer > attackRange) {
-      setWalkTarget(player.position);
-    }
-    // else if (distanceToPlayer <= attackRange && canAttack) {
-    //   attack(
-    //     target: player,
-    //   );
-    // }
-  }
-
-  /// Handles interaction with an [enemy].
-  void _handleEnemyInteraction(EnemyNpc<Object> enemy) {
-    // Get its position
-    final enemyPosition = enemy.position;
-    // Find distance
-    final distanceToEnemy = (enemyPosition - position).length - (enemy.size / 4).length;
-
-    // if (distanceToEnemy <= visibilityRange) {
-    //   lookAtTarget(enemyPosition);
-    // }
-
-    if (distanceToEnemy > attackRange) {
-      setWalkTarget(enemy.position);
-    } else if (distanceToEnemy <= attackRange && canAttack) {
-      attack(
-        target: enemy,
-      );
-    }
-  }
-
-  /// Handles what animation to play.
-  void _handleAnimation(double dt) {
-    // Set dead if not alive
-    if (!isAlive) {
-      current = NpcState.die;
-      return;
-    }
-
-    // If attacked choose between hurt and dead animation based on if alive
-    if (isAttacked) {
-      // Get new state
-      final damageState = switch (isAlive) {
-        true => NpcState.hurt,
-        false => NpcState.die,
-      };
-      current = damageState;
-      return;
-    }
-
-    // If attacking
-    if (isAttacking) {
-      // If there is an attacking in progress, do nothing
-      if (isAttackingInProgress) return;
-
-      current = [NpcState.attack].random();
-      return;
-    }
-
-    // Handle idle or walking
-    if (velocity.isZero()) {
-      current = NpcState.idle;
-    } else {
-      current = NpcState.walk;
-    }
+  /// Method to setup hitbox for the npc.
+  ///
+  /// By default used [RectangleHitbox] with a [hitboxSize].
+  ///
+  /// If hitbox should be custom, override this method.
+  FutureOr<void> setupHitbox() async {
+    await add(
+      RectangleHitbox(
+        size: hitboxSize,
+        position: Vector2(
+          size.x / 2,
+          size.y,
+        ),
+        anchor: Anchor.bottomCenter,
+      ),
+    );
   }
 }

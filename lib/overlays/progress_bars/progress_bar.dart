@@ -25,6 +25,7 @@ final class ProgressBar extends PositionComponent {
 
   @override
   void render(Canvas canvas) {
+    super.render(canvas);
     canvas
       ..drawRect(
         size.toRect(),

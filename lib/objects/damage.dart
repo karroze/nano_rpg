@@ -1,15 +1,11 @@
-import 'package:flame_nano_rpg/objects/damage_type.dart';
+import 'package:flame_nano_rpg/objects/attack.dart';
 
 class Damage {
   const Damage({
     required this.amount,
-    required this.type,
+    required this.attack,
   });
 
-  const Damage.melee({
-    required this.amount,
-  }) : type = DamageType.melee;
-
   final int amount;
-  final DamageType type;
+  final Attack attack;
 }

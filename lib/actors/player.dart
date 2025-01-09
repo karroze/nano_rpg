@@ -17,6 +17,7 @@ import 'package:flame_nano_rpg/actors/contracts/healable.dart';
 import 'package:flame_nano_rpg/actors/contracts/living.dart';
 import 'package:flame_nano_rpg/actors/contracts/moving.dart';
 import 'package:flame_nano_rpg/actors/objects/tree.dart';
+import 'package:flame_nano_rpg/objects/attack.dart';
 import 'package:flutter/services.dart';
 
 enum PlayerState {
@@ -29,8 +30,7 @@ enum PlayerState {
   die;
 }
 
-final class Player extends Character<PlayerState>
-    with KeyboardHandler, CollisionCallbacks, Living, Attacking, Attackable, HasStamina, Healable, Moving {
+final class Player extends Character<PlayerState> with KeyboardHandler, CollisionCallbacks, Living, Attacking, Attackable, HasStamina, Healable, Moving {
   Player({
     required super.position,
   }) : super(
@@ -64,13 +64,22 @@ final class Player extends Character<PlayerState>
   double get attackRange => 25;
 
   @override
-  int get damageAmount => 25;
+  List<Attack> get availableAttacks => [
+        _simpleAttack,
+      ];
+
+  Attack get _simpleAttack => const Attack(
+        title: 'Simple',
+        damage: 25,
+        damageCrit: 40,
+        critChance: .2,
+        range: 25,
+      );
 
   @override
-  int get critDamageAmount => 50;
-
-  @override
-  double get critChance => .2;
+  Attack chooseAttack() {
+    return _simpleAttack;
+  }
 
   late final enemyTargets = <EnemyNpc<Object>>[];
 
@@ -140,7 +149,7 @@ final class Player extends Character<PlayerState>
       final lookingAtEnemyOnLeft = scale.x < 1 && other.position.x < position.x;
       if (lookingAtEnemyOnRight || lookingAtEnemyOnLeft) {
         // Add enemy to the enemies list
-        if(enemyTargets.contains(other)) {
+        if (enemyTargets.contains(other)) {
           enemyTargets.remove(other);
         }
         enemyTargets.add(other);
@@ -159,8 +168,7 @@ final class Player extends Character<PlayerState>
     super.onCollisionEnd(other);
     if (other is Tree) {
       collisionDirection.setValues(0, 0);
-    }
-    else if(other is EnemyNpc<Object>) {
+    } else if (other is EnemyNpc<Object>) {
       enemyTargets.remove(other);
     }
   }
@@ -435,7 +443,7 @@ final class Player extends Character<PlayerState>
 
       // Attack every enemy target
       for (final enemyTarget in enemyTargets) {
-        attack(target: enemyTarget);
+        attackTarget(target: enemyTarget);
       }
 
       return true;

@@ -1,5 +1,6 @@
 import 'package:flame/components.dart';
 import 'package:flame_nano_rpg/actors/enemies/enemy_npc_regular.dart';
+import 'package:flame_nano_rpg/objects/attack.dart';
 
 final class EnemyOrcShaman extends EnemyNpcRegular {
   EnemyOrcShaman({
@@ -34,16 +35,23 @@ final class EnemyOrcShaman extends EnemyNpcRegular {
   double get attackRange => 25;
 
   @override
-  int get damageAmount => 10;
-
-  @override
-  int get critDamageAmount => 15;
-
-  @override
-  double get critChance => .3;
-
-  @override
   double get damageCooldownTimeframeSeconds => 1.5;
+
+  @override
+  List<Attack> get availableAttacks => [
+        _simpleAttack,
+      ];
+
+  Attack get _simpleAttack => const Attack(
+        title: 'Simple',
+        damage: 10,
+        damageCrit: 15,
+        critChance: .3,
+        range: 25,
+      );
+
+  @override
+  Attack chooseAttack() => _simpleAttack;
 
   @override
   SpriteAnimation get idleAnimation => SpriteAnimation.fromFrameData(

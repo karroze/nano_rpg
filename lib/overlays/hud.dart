@@ -55,6 +55,7 @@ final class Hud extends PositionComponent with HasGameRef<NanoRpgGame> {
       value: 0,
       maxValue: 0,
       position: Vector2(game.size.x - 250, 20),
+      anchor: Anchor.center,
     );
     add(_healthBar);
 
@@ -62,6 +63,7 @@ final class Hud extends PositionComponent with HasGameRef<NanoRpgGame> {
       value: 0,
       maxValue: 0,
       position: Vector2(game.size.x - 250, 45),
+      anchor: Anchor.center,
     );
     add(_staminaBar);
 
@@ -81,11 +83,13 @@ final class Hud extends PositionComponent with HasGameRef<NanoRpgGame> {
   void update(double dt) {
     // Find player if not set
     _player ??= game.findByKeyName('player');
-    _healthBar
-      ..value = _player!.health
-      ..maxValue = _player!.maxHealth;
-    _staminaBar
-      ..value = _player!.stamina
-      ..maxValue = _player!.maxStamina;
+    if(_player != null) {
+      _healthBar
+        ..value = _player!.health
+        ..maxValue = _player!.maxHealth;
+      _staminaBar
+        ..value = _player!.stamina
+        ..maxValue = _player!.maxStamina;
+    }
   }
 }
