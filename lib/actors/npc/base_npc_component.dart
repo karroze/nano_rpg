@@ -9,15 +9,17 @@ import 'package:flame_nano_rpg/actors/contracts/attacking.dart';
 import 'package:flame_nano_rpg/actors/contracts/attacking_with_cooldown.dart';
 import 'package:flame_nano_rpg/actors/contracts/attacking_with_stamina.dart';
 import 'package:flame_nano_rpg/actors/contracts/has_stamina.dart';
+import 'package:flame_nano_rpg/actors/contracts/interactable.dart';
 import 'package:flame_nano_rpg/actors/contracts/living.dart';
 import 'package:flame_nano_rpg/actors/contracts/moving.dart';
+import 'package:flame_nano_rpg/actors/npc/enemies/simple_enemy_component.dart';
 import 'package:flame_nano_rpg/actors/npc/friendly/friendly_npc_animator.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flame_nano_rpg/overlays/progress_bars/health_bar.dart';
 import 'package:flutter/material.dart';
 
 abstract class BaseNpcComponent<State> extends PositionComponent
-    with HasGameRef<NanoRpgGame>, Living, Moving, HasStamina, Attackable, Attacking, AttackingWithCooldown, AttackingWithStamina {
+    with HasGameRef<NanoRpgGame>, Living, Moving, HasStamina, Interactable, Attackable, Attacking, AttackingWithCooldown, AttackingWithStamina {
   BaseNpcComponent({
     required super.position,
     required super.size,
@@ -29,6 +31,7 @@ abstract class BaseNpcComponent<State> extends PositionComponent
   /// Provide initialized [FriendlyNpcAnimator] for npc.
   FutureOr<SimpleCharacterAnimator<State>> provideAnimationGroupComponent();
 
+  /// Provides [NpcAnimatorCallbacks].
   FutureOr<NpcAnimatorCallbacks?> provideAnimationCallbacks();
 
   /// Provide [State] update upon every update for [dt].
@@ -39,9 +42,13 @@ abstract class BaseNpcComponent<State> extends PositionComponent
   /// Handle NPC interactions with other objects.
   void handleInteractions();
 
+  /// Returns a list of [Attackable] targets to interact with
+  List<SimpleEnemyComponent> filterTargets(List<SimpleEnemyComponent> foundTargets) => foundTargets;
+
   /// Provide hitbox size.
   Vector2 get hitboxSize;
 
+  late List<SimpleEnemyComponent> enemyTargets = <SimpleEnemyComponent>[];
   late final SimpleCharacterAnimator<State> animator;
   late final HealthBar healthBar;
 
@@ -84,6 +91,10 @@ abstract class BaseNpcComponent<State> extends PositionComponent
 
       // Handle NPC interactions
       handleInteractions();
+
+      // Filter targets and store
+      final foundTargets = <SimpleEnemyComponent>[];
+      enemyTargets = filterTargets(foundTargets);
 
       // If there is a walk point
       if (walkPoint != null && !isAttacking) {

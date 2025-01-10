@@ -1,9 +1,10 @@
 import 'package:flame_nano_rpg/actors/contracts/attacking.dart';
+import 'package:flame_nano_rpg/actors/contracts/interactable.dart';
 import 'package:flame_nano_rpg/actors/contracts/living.dart';
 import 'package:flame_nano_rpg/objects/damage.dart';
 import 'package:meta/meta.dart';
 
-mixin Attackable on Living {
+mixin Attackable on Interactable, Living {
   /// Flag if is currently attacked.
   bool isAttacked = false;
 

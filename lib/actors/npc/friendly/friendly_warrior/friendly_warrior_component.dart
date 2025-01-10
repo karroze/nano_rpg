@@ -114,6 +114,11 @@ final class FriendlyWarriorComponent extends BaseNpcComponent<NpcState> {
   }
 
   @override
+  void interactWith() {
+    // TODO: implement interactWith
+  }
+
+  @override
   void handleInteractions() {
     // TODO(georgii.savatkov): This is bad but ok for now
     // Find player if not set

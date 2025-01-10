@@ -1,36 +1,25 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flame/components.dart';
-import 'package:flame/extensions.dart';
-import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom_blue_hat.dart';
-import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom_emerald.dart';
-import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom_purple.dart';
-import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom_stringy.dart';
-import 'package:flame_nano_rpg/actors/npc/enemies/orc_berserk/enemy_orc_berserk_component.dart';
-import 'package:flame_nano_rpg/actors/npc/enemies/orc_shaman/enemy_orc_shaman_component.dart';
-import 'package:flame_nano_rpg/actors/npc/enemies/orc_warrior/enemy_orc_warrior_component.dart';
-import 'package:flame_nano_rpg/actors/npc/friendly/friendly_warrior/friendly_warrior_component.dart';
-import 'package:flame_nano_rpg/actors/objects/tree.dart';
-import 'package:flame_nano_rpg/actors/player/player.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flame_nano_rpg/overlays/hud.dart';
+import 'package:flame_nano_rpg/workers/default_map_spawner.dart';
+import 'package:flame_nano_rpg/workers/map_resolver.dart';
+import 'package:flame_nano_rpg/workers/map_spawn_request.dart';
+import 'package:flame_nano_rpg/workers/map_spawner.dart';
+import 'package:flame_nano_rpg/workers/map_vector.dart';
 
 final class MainWorld extends World with HasGameRef<NanoRpgGame> {
-  final gridSize = 96;
+  // Size in pixels of single map cell
+  static final _gridCellSize = Vector2.all(96);
 
-  static const xOffset = 60;
-  static const yOffset = 60;
-
-  final map = <List<PositionComponent?>>[];
-
-  late final Player player;
+  late final MapSpawner mapSpawner;
+  late final MapResolver mapResolver;
 
   @override
   FutureOr<void> onLoad() async {
+    super.onLoad();
     await _initialize(loadHud: true);
-
-    return super.onLoad();
   }
 
   @override
@@ -42,14 +31,32 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
     }
   }
 
+  FutureOr<void> onSpawnObject(MapSpawnRequest object) {
+    add(object.object);
+  }
+
   FutureOr<void> _initialize({
     required bool loadHud,
   }) async {
-    await _initializeMap();
-    await _loadMap();
-    // await _loadDebugEnemy();
-    await _loadPlayer();
-    await _loadFriendlyNpc();
+    // Get map size
+    final mapSize = MapVector(
+      (game.size.x / _gridCellSize.x).ceil(),
+      (game.size.y / _gridCellSize.y).ceil(),
+    );
+
+    // Initialize map spawner
+    mapSpawner = DefaultMapSpawner(
+      gameSize: game.size,
+      gridCellSize: _gridCellSize,
+      onSpawnObject: onSpawnObject,
+    );
+
+    // Initialize map resolver and add it
+    mapResolver = MapResolver(
+      mapSize: mapSize,
+      spawner: mapSpawner,
+    );
+    await add(mapResolver);
 
     if (loadHud) {
       // final viewport = FixedSizeViewport(
@@ -68,119 +75,13 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
       //   //   snap: true,
       //   // );
       // game.camera = cameraComponent;
-      game.camera
-        ..viewfinder.anchor = Anchor.topLeft
-        ..viewport.add(Hud());
+
+      // Set camera anchor
+      game.camera.viewfinder.anchor = Anchor.topLeft;
+      // Add HUD to the viewport
+      await game.camera.viewport.add(Hud());
     }
 
     game.gameReset = false;
-  }
-
-  Future<void> _initializeMap() async {
-    // Get number of X and Y grid cells
-    final mapSizeX = (game.size.x / gridSize).ceil();
-    final maxSizeY = (game.size.y / gridSize).ceil();
-
-    // Iterate over
-    for (var i = 0; i < mapSizeX - 1; i++) {
-      // Add en empty list of maxSizeY size
-      map.add(
-        List.filled(
-          maxSizeY,
-          null,
-        ),
-      );
-    }
-  }
-
-  FutureOr<void> _loadMap() async {
-    // Get number of X and Y grid cells
-    final mapSizeX = (game.size.x / gridSize).ceil();
-    final maxSizeY = (game.size.y / gridSize).ceil();
-
-    // Iterate over
-    for (var i = 0; i < mapSizeX - 1; i++) {
-      // Add en empty list of maxSizeY size
-      map.add(
-        List.filled(
-          maxSizeY,
-          null,
-        ),
-      );
-      for (var j = 0; j < maxSizeY - 1; j++) {
-        final xPosition = xOffset + i * gridSize.toDouble();
-        final yPosition = yOffset + j * gridSize.toDouble();
-
-        final spawnPosition = Vector2(xPosition, yPosition);
-
-        final objectToSpawn = switch (Random().nextInt(5000)) {
-          < 200 => Tree(
-              position: spawnPosition,
-            ),
-          < 500 => [
-              MushroomBlueHat(
-                position: spawnPosition,
-              ),
-              MushroomEmerald(
-                position: spawnPosition,
-              ),
-              MushroomPurple(
-                position: spawnPosition,
-              ),
-              MushroomStringy(
-                position: spawnPosition,
-              ),
-            ].random(),
-          < 1000 => [
-              EnemyOrcBerserkComponent(
-                position: spawnPosition,
-              ),
-              EnemyOrcShamanComponent(
-                position: spawnPosition,
-              ),
-              EnemyOrcWarriorComponent(
-                position: spawnPosition,
-              ),
-            ].random(),
-          _ => null,
-        };
-        if (objectToSpawn != null) {
-          map[i][j] = objectToSpawn;
-          await game.add(objectToSpawn);
-        }
-      }
-    }
-  }
-
-  FutureOr<void> _loadDebugEnemy() async {
-    // Get number of X and Y grid cells
-    final mapSizeX = (game.size.x / gridSize).ceil();
-    final maxSizeY = (game.size.y / gridSize).ceil();
-    final i = (mapSizeX / 2).toInt() + 2;
-    final j = (maxSizeY / 2).toInt();
-    final xPosition = xOffset + i * gridSize.toDouble();
-    final yPosition = yOffset + j * gridSize.toDouble();
-
-    final spawnPosition = Vector2(xPosition, yPosition);
-    final enemy = EnemyOrcShamanComponent(
-      position: spawnPosition,
-    );
-    await game.add(enemy);
-    map[i][j] = enemy;
-  }
-
-  FutureOr<void> _loadPlayer() async {
-    player = Player(
-      position: game.size / 2,
-    );
-    await game.add(player);
-  }
-
-  FutureOr<void> _loadFriendlyNpc() async {
-    await game.add(
-      FriendlyWarriorComponent(
-        position: game.size / 2 + Vector2(20, 0),
-      ),
-    );
   }
 }

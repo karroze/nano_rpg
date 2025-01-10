@@ -27,7 +27,9 @@ abstract mixin class Attacking {
   Attack chooseAttack() => availableAttacks.random();
 
   /// Method to produce an [Damage] object.
-  Damage dealDamage({Attack? attack}) {
+  Damage dealDamage({
+    Attack? attack,
+  }) {
     // Choose attack if no specific attack was provided
     attack ??= chooseAttack();
     final isCritical = Random().nextDouble() > attack.critChance;

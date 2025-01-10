@@ -7,6 +7,7 @@ import 'package:flame/extensions.dart';
 import 'package:flame/rendering.dart';
 import 'package:flame_nano_rpg/actors/animators/npc_animator_callbacks.dart';
 import 'package:flame_nano_rpg/actors/animators/simple_character_animator.dart';
+import 'package:flame_nano_rpg/actors/contracts/attackable.dart';
 import 'package:flame_nano_rpg/actors/contracts/eatable.dart';
 import 'package:flame_nano_rpg/actors/contracts/healable.dart';
 import 'package:flame_nano_rpg/actors/npc/base_npc_component.dart';
@@ -67,8 +68,6 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
 
   @override
   Vector2 get hitboxSize => Vector2(68, 64);
-
-  late final enemyTargets = <SimpleEnemyComponent>[];
 
   final collisionDirection = Vector2.zero();
 
@@ -371,5 +370,13 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
     if (goesLeftLooksRight || goesRightLooksLeft) {
       animator.flipHorizontally();
     }
+  }
+
+  @override
+  List<SimpleEnemyComponent> filterTargets(List<SimpleEnemyComponent> foundTargets) => foundTargets;
+
+  @override
+  void interactWith() {
+    // TODO: implement interactWith
   }
 }
