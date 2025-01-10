@@ -8,6 +8,10 @@ final class StaminaBar extends LabeledProgressBar {
     required super.maxValue,
     required super.position,
     required super.anchor,
+    super.showLabel,
+    super.showValueText,
+    super.labelTextStyle,
+    super.valueTextStyle,
   }) : super(
           label: 'Stamina:',
           progressColor: Colors.green,

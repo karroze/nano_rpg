@@ -37,7 +37,7 @@ final class FriendlyWarriorComponent extends BaseNpcComponent<NpcState> {
   double get staminaRegenTimeframeSeconds => 1;
 
   @override
-  double get moveSpeed => 25;
+  double get moveSpeed => 50;
 
   @override
   double get moveDistance => 100;

@@ -79,7 +79,11 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
       // Set camera anchor
       game.camera.viewfinder.anchor = Anchor.topLeft;
       // Add HUD to the viewport
-      await game.camera.viewport.add(Hud());
+      await game.camera.viewport.add(
+        Hud(
+          position: Vector2(game.size.x / 2, game.size.y - 15),
+        ),
+      );
     }
 
     game.gameReset = false;
