@@ -33,23 +33,40 @@ final class MapResolver extends Component {
     await _loadCustomObjects();
   }
 
+  void removeObjectFromMap(PositionComponent object) {}
+
   List<BaseNpcComponent<Object>> lookupObjectsForPosition(
     MapVector position, {
     required MapVector distance,
   }) {
     // List of found objects
     final foundObjects = <BaseNpcComponent<Object>>[];
+
+    // Clamp lookup X position start and end
+    final requestedStartPositionX = position.x - distance.x;
+    final requestedEndPositionX = position.x + distance.x;
+    final startPosX = requestedStartPositionX >= 0 ? requestedStartPositionX : requestedStartPositionX.clamp(0, position.x);
+    final endPosX = requestedEndPositionX < mapSize.x ? requestedEndPositionX : requestedEndPositionX.clamp(position.x, mapSize.x);
+
+    // Clamp lookup Y position start and end
+    final requestedStartPositionY = position.y - distance.y;
+    final requestedEndPositionY = position.y + distance.y;
+    final startPosY = requestedStartPositionY >= 0 ? requestedStartPositionY : requestedStartPositionY.clamp(0, position.y);
+    final endPosY = requestedEndPositionY < mapSize.y ? requestedEndPositionY : requestedEndPositionY.clamp(position.y, mapSize.y);
+
     // Iterate over X
-    for (var x = position.x - distance.x; x < position.x + distance.x - 1; x++) {
+    for (var x = startPosX; x < endPosX - 1; x++) {
       // Iterate over Y
-      for (var y = position.y - distance.y; y < position.y + distance.y - 1; y++) {
-        x = x.clamp(0, mapSize.x - 1);
-        y = y.clamp(0, mapSize.y - 1);
+      for (var y = startPosY; y < endPosY - 1; y++) {
         // Get object at X,Y
-        final objectAtPosition = map[x][y];
-        // If there is an object
-        if (objectAtPosition != null && objectAtPosition is BaseNpcComponent<Object>) {
-          foundObjects.add(objectAtPosition);
+        try {
+          final objectAtPosition = map[x][y];
+          // If there is an object
+          if (objectAtPosition != null && objectAtPosition is BaseNpcComponent<Object>) {
+            foundObjects.add(objectAtPosition);
+          }
+        } catch (e) {
+          print('a');
         }
       }
     }

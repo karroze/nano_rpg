@@ -5,6 +5,7 @@ import 'package:flame/extensions.dart';
 import 'package:flame_nano_rpg/actors/animators/npc_animator_callbacks.dart';
 import 'package:flame_nano_rpg/actors/npc/base_npc_component.dart';
 import 'package:flame_nano_rpg/actors/npc/enemies/enemy_state.dart';
+import 'package:flame_nano_rpg/actors/objects/explosion.dart';
 import 'package:flame_nano_rpg/actors/player/player.dart';
 
 abstract class SimpleEnemyComponent extends BaseNpcComponent<EnemyState> {
@@ -131,8 +132,14 @@ abstract class SimpleEnemyComponent extends BaseNpcComponent<EnemyState> {
         milliseconds: 1250,
       ),
     );
-    // await onDie();
+    // Remove from parent entirely
     removeFromParent();
+    // Add explosion
+    await game.add(
+      Explosion(
+        position: position,
+      ),
+    );
   }
 
   FutureOr<void> onHurtStarted() async {

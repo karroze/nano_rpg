@@ -147,15 +147,15 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
     super.onCollision(intersectionPoints, other);
 
     if (other is SimpleEnemyComponent) {
-      final lookingAtEnemyOnRight = animator.scale.x >= 1 && other.position.x >= position.x;
-      final lookingAtEnemyOnLeft = animator.scale.x < 1 && other.position.x < position.x;
-      if (lookingAtEnemyOnRight || lookingAtEnemyOnLeft) {
-        // Add enemy to the enemies list
-        if (enemyTargets.contains(other)) {
-          enemyTargets.remove(other);
-        }
-        enemyTargets.add(other);
-      }
+      // final lookingAtEnemyOnRight = animator.scale.x >= 1 && other.position.x >= position.x;
+      // final lookingAtEnemyOnLeft = animator.scale.x < 1 && other.position.x < position.x;
+      // if (lookingAtEnemyOnRight || lookingAtEnemyOnLeft) {
+      //   // Add enemy to the enemies list
+      //   if (enemyTargets.contains(other)) {
+      //     enemyTargets.remove(other);
+      //   }
+      //   enemyTargets.add(other);
+      // }
     } else if (other is Tree) {
       final targetDirection = other.position - position;
       collisionDirection.setValues(

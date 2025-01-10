@@ -126,15 +126,17 @@ final class FriendlyWarriorComponent extends BaseNpcComponent<NpcState> {
 
     // If there is a player
     if (player != null) {
-      _handlePlayerInteraction(player!);
-
       // Check if player has enemies
       if (player!.enemyTargets.isNotEmpty) {
         // Get last
         final playerEnemy = player!.enemyTargets.last;
-        // Attack every enemy target
+        // Handle enemy interaction
         _handleEnemyInteraction(playerEnemy);
+        return;
       }
+
+      // Handle player interaction
+      _handlePlayerInteraction(player!);
     }
   }
 
@@ -149,18 +151,11 @@ final class FriendlyWarriorComponent extends BaseNpcComponent<NpcState> {
       lookAtTarget(playerPosition);
     }
 
-    if (distanceToPlayer > visibilityRange && walkPoint == null) {
-      // _searchWalkPoint();
-    } else if (distanceToPlayer > moveDistance && distanceToPlayer <= visibilityRange) {
+    if (distanceToPlayer > moveDistance && distanceToPlayer <= visibilityRange) {
       lookAtTarget(playerPosition);
-    } else if (distanceToPlayer <= moveDistance && distanceToPlayer > attackRange) {
+    } else if (distanceToPlayer <= moveDistance) {
       setWalkTarget(player.position);
     }
-    // else if (distanceToPlayer <= attackRange && canAttack) {
-    //   attack(
-    //     target: player,
-    //   );
-    // }
   }
 
   /// Handles interaction with an [enemy].
@@ -214,7 +209,7 @@ final class FriendlyWarriorComponent extends BaseNpcComponent<NpcState> {
   }
 
   FutureOr<void> onHurtStarted() async {
-   await animator.add(
+    await animator.add(
       OpacityEffect.fadeOut(
         EffectController(
           alternate: true,
