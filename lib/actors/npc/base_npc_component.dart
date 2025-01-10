@@ -16,10 +16,21 @@ import 'package:flame_nano_rpg/actors/npc/enemies/simple_enemy_component.dart';
 import 'package:flame_nano_rpg/actors/npc/friendly/friendly_npc_animator.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flame_nano_rpg/overlays/progress_bars/health_bar.dart';
+import 'package:flame_nano_rpg/worlds/main_world.dart';
 import 'package:flutter/material.dart';
 
 abstract class BaseNpcComponent<State> extends PositionComponent
-    with HasGameRef<NanoRpgGame>, Living, Moving, HasStamina, Interactable, Attackable, Attacking, AttackingWithCooldown, AttackingWithStamina {
+    with
+        HasGameRef<NanoRpgGame>,
+        HasWorldReference<MainWorld>,
+        Living,
+        Moving,
+        HasStamina,
+        Interactable,
+        Attackable,
+        Attacking,
+        AttackingWithCooldown,
+        AttackingWithStamina {
   BaseNpcComponent({
     required super.position,
     required super.size,
@@ -43,12 +54,12 @@ abstract class BaseNpcComponent<State> extends PositionComponent
   void handleInteractions();
 
   /// Returns a list of [Attackable] targets to interact with
-  List<SimpleEnemyComponent> filterTargets(List<SimpleEnemyComponent> foundTargets) => foundTargets;
+  List<BaseNpcComponent<Object>> filterTargets(List<BaseNpcComponent<Object>> foundTargets) => foundTargets;
 
   /// Provide hitbox size.
   Vector2 get hitboxSize;
 
-  late List<SimpleEnemyComponent> enemyTargets = <SimpleEnemyComponent>[];
+  late List<BaseNpcComponent<Object>> enemyTargets = <BaseNpcComponent<Object>>[];
   late final SimpleCharacterAnimator<State> animator;
   late final HealthBar healthBar;
 
@@ -93,7 +104,10 @@ abstract class BaseNpcComponent<State> extends PositionComponent
       handleInteractions();
 
       // Filter targets and store
-      final foundTargets = <SimpleEnemyComponent>[];
+      final foundTargets = world.lookupObjectsForPosition(
+        position,
+        distance: 100,
+      );
       enemyTargets = filterTargets(foundTargets);
 
       // If there is a walk point

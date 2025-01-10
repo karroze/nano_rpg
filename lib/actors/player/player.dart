@@ -373,7 +373,16 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
   }
 
   @override
-  List<SimpleEnemyComponent> filterTargets(List<SimpleEnemyComponent> foundTargets) => foundTargets;
+  List<BaseNpcComponent<Object>> filterTargets(List<BaseNpcComponent<Object>> foundTargets) {
+
+    final enemies = foundTargets.whereType<SimpleEnemyComponent>().toList();
+    if(foundTargets.isNotEmpty) {
+      print('Targets: $foundTargets');
+      print('Enemies: $enemies');
+    }
+
+    return enemies;
+  }
 
   @override
   void interactWith() {

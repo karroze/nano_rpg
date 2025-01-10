@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flame/components.dart';
+import 'package:flame_nano_rpg/actors/npc/base_npc_component.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flame_nano_rpg/overlays/hud.dart';
 import 'package:flame_nano_rpg/workers/default_map_spawner.dart';
@@ -87,5 +88,25 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
     }
 
     game.gameReset = false;
+  }
+
+  List<BaseNpcComponent<Object>> lookupObjectsForPosition(
+    Vector2 position, {
+    required int distance,
+  }) {
+    // Get map position for pixel position
+    final mapPosition = MapVector(
+      (position.x / _gridCellSize.x).ceil(),
+      (position.y / _gridCellSize.y).ceil(),
+    );
+    final mapDistance = MapVector(
+      (distance / _gridCellSize.x).ceil(),
+      (distance / _gridCellSize.y).ceil(),
+    );
+    // Lookup objects
+    return mapResolver.lookupObjectsForPosition(
+      mapPosition,
+      distance: mapDistance,
+    );
   }
 }
