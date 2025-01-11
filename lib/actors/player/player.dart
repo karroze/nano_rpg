@@ -7,7 +7,6 @@ import 'package:flame/extensions.dart';
 import 'package:flame/rendering.dart';
 import 'package:flame_nano_rpg/actors/animators/npc_animator_callbacks.dart';
 import 'package:flame_nano_rpg/actors/animators/simple_character_animator.dart';
-import 'package:flame_nano_rpg/actors/contracts/attackable.dart';
 import 'package:flame_nano_rpg/actors/contracts/eatable.dart';
 import 'package:flame_nano_rpg/actors/contracts/healable.dart';
 import 'package:flame_nano_rpg/actors/npc/base_npc_component.dart';
@@ -23,13 +22,13 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
     required super.position,
   }) : super(
           key: ComponentKey.named('player'),
-          priority: 2,
+          priority: 1,
           size: Vector2(96, 96),
           anchor: Anchor.center,
         );
 
   @override
-  int get maxHealth => 100;
+  int get maxHealth => 10000;
 
   @override
   int get maxStamina => 100;
@@ -68,6 +67,9 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
 
   @override
   Vector2 get hitboxSize => Vector2(68, 64);
+
+  @override
+  int get visibilityRange => 150;
 
   final collisionDirection = Vector2.zero();
 
@@ -115,6 +117,11 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
     ..onHurtStarted = onHurtStarted
     ..onHurtEnded = onHurtEnded
     ..onDieEnded = onDieEnded;
+
+  @override
+  List<BaseNpcComponent<Object>> filterTargets(List<BaseNpcComponent<Object>> foundTargets) {
+    return foundTargets.whereType<SimpleEnemyComponent>().toList();
+  }
 
   @override
   FutureOr<void> setupUi() {
@@ -171,7 +178,7 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
     if (other is Tree) {
       collisionDirection.setValues(0, 0);
     } else if (other is SimpleEnemyComponent) {
-      enemyTargets.remove(other);
+      availableTargets.remove(other);
     }
   }
 
@@ -221,36 +228,34 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
   }
 
   @override
-  void handleInteractions() {}
-
-  FutureOr<void> onAttackStarted() {
-    isAttackingInProgress = true;
-  }
-
-  FutureOr<void> onAttackEnded() {
-    isAttacking = false;
-    isAttackingInProgress = false;
-  }
-
-  FutureOr<void> onHurtStarted() async {
-    await animator.add(
-      OpacityEffect.fadeOut(
-        EffectController(
-          alternate: true,
-          duration: 0.125,
-          repeatCount: 2,
+  bool interactWith(
+    BaseNpcComponent<Object> object, {
+    required double distance,
+  }) {
+    return switch (object) {
+      final SimpleEnemyComponent enemy => handleEnemy(
+          enemy,
+          distance: distance,
         ),
-      ),
-    );
+      _ => false,
+    };
   }
 
-  FutureOr<void> onHurtEnded() {
-    isAttacked = false;
-    isAttacking = false;
-    isAttackedInProgress = false;
-  }
+  @override
+  bool handleEnemy(
+    BaseNpcComponent<Object> target, {
+    required double distance,
+  }) {
+    // Get its position
+    if (distance <= attackRange && canAttack && isAttacking && !isAttackingInProgress) {
+      attackTarget(
+        target: target,
+      );
+      return true;
+    }
 
-  FutureOr<void> onDieStarted() => null;
+    return false;
+  }
 
   FutureOr<void> onDieEnded() async {
     // Wait for some time
@@ -316,7 +321,7 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
   /// Clears found enemy targets at the end of every update.
   void _disposeEnemyTargets() {
     // Clear enemy targets
-    enemyTargets.clear();
+    availableTargets.clear();
   }
 
   /// Handles attacking
@@ -343,11 +348,6 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
       // Manually decrease stamina even if no enemy targets were hit
       decreaseStaminaPerHit();
 
-      // Attack every enemy target
-      for (final enemyTarget in enemyTargets) {
-        attackTarget(target: enemyTarget);
-      }
-
       return true;
     }
     return false;
@@ -364,28 +364,17 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
       newPosY,
     );
 
+    // Update object position on the map
+    world.updateObjectFromMap(
+      this,
+      newPosition: position,
+    );
+
     // Control flip
     final goesLeftLooksRight = velocity.x < 0 && animator.scale.x > 0;
     final goesRightLooksLeft = velocity.x > 0 && animator.scale.x < 0;
     if (goesLeftLooksRight || goesRightLooksLeft) {
       animator.flipHorizontally();
     }
-  }
-
-  @override
-  List<BaseNpcComponent<Object>> filterTargets(List<BaseNpcComponent<Object>> foundTargets) {
-
-    final enemies = foundTargets.whereType<SimpleEnemyComponent>().toList();
-    if(foundTargets.isNotEmpty) {
-      print('Targets: $foundTargets');
-      print('Enemies: $enemies');
-    }
-
-    return enemies;
-  }
-
-  @override
-  void interactWith() {
-    // TODO: implement interactWith
   }
 }

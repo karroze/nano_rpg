@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flame/components.dart';
-import 'package:flame_nano_rpg/actors/contracts/interactable.dart';
 import 'package:flame_nano_rpg/actors/npc/base_npc_component.dart';
 import 'package:flame_nano_rpg/workers/map_spawn_request.dart';
 import 'package:flame_nano_rpg/workers/map_spawner.dart';
@@ -12,14 +11,17 @@ final class MapResolver extends Component {
     required this.mapSize,
     required this.spawner,
     this.onLoadPlayer,
+    this.loadMap = true,
   });
 
   final MapVector mapSize;
   final MapSpawner spawner;
 
+  final bool loadMap;
+
   FutureOr<PositionComponent> Function()? onLoadPlayer;
 
-  final map = <List<PositionComponent?>>[];
+  final map = <List<List<PositionComponent?>>>[];
 
   @override
   FutureOr<void> onLoad() async {
@@ -27,13 +29,54 @@ final class MapResolver extends Component {
 
     // Initialize map with empty data
     await _initializeMap();
-    // Load map items
-    await _loadMap();
+    // If map loading enabled, load map items
+    if (loadMap) {
+      await _loadMap();
+    }
     // Load player
     await _loadCustomObjects();
   }
 
-  void removeObjectFromMap(PositionComponent object) {}
+  /// Method to removed [object] from map.
+  void removeObjectFromMap(PositionComponent object) {
+    // Get map position for object
+    final mapPositionForObject = _getMapPositionForObject(object);
+    // If this position exists, remove object from this position
+    if (mapPositionForObject != null) {
+      map[mapPositionForObject.x][mapPositionForObject.y] = map[mapPositionForObject.x][mapPositionForObject.y]
+        ..removeWhere(
+          (item) => item == object,
+        );
+    }
+  }
+
+  /// Method to update [object] position on the map.
+  void updateObjectFromMap(
+    PositionComponent object, {
+    required MapVector newPosition,
+  }) {
+    // Remove object from map
+    removeObjectFromMap(object);
+    // Set new position for object
+    try {
+      map[newPosition.x][newPosition.y] = List.of(map[newPosition.x][newPosition.y])..add(object);
+    } catch (_) {
+      print('B');
+    }
+  }
+
+  MapVector? _getMapPositionForObject(PositionComponent object) {
+    // Iterate over X
+    for (var x = 0; x < mapSize.x - 1; x++) {
+      // Iterate over Y
+      for (var y = 0; y < mapSize.y - 1; y++) {
+        if (map[x][y].contains(object)) {
+          return MapVector(x, y);
+        }
+      }
+    }
+    return null;
+  }
 
   List<BaseNpcComponent<Object>> lookupObjectsForPosition(
     MapVector position, {
@@ -46,26 +89,27 @@ final class MapResolver extends Component {
     final requestedStartPositionX = position.x - distance.x;
     final requestedEndPositionX = position.x + distance.x;
     final startPosX = requestedStartPositionX >= 0 ? requestedStartPositionX : requestedStartPositionX.clamp(0, position.x);
-    final endPosX = requestedEndPositionX < mapSize.x ? requestedEndPositionX : requestedEndPositionX.clamp(position.x, mapSize.x);
+    final endPosX = requestedEndPositionX < mapSize.x ? requestedEndPositionX : requestedEndPositionX.clamp(position.x, mapSize.x - 1);
 
     // Clamp lookup Y position start and end
     final requestedStartPositionY = position.y - distance.y;
     final requestedEndPositionY = position.y + distance.y;
     final startPosY = requestedStartPositionY >= 0 ? requestedStartPositionY : requestedStartPositionY.clamp(0, position.y);
-    final endPosY = requestedEndPositionY < mapSize.y ? requestedEndPositionY : requestedEndPositionY.clamp(position.y, mapSize.y);
+    final endPosY = requestedEndPositionY < mapSize.y ? requestedEndPositionY : requestedEndPositionY.clamp(position.y, mapSize.y - 1);
 
     // Iterate over X
-    for (var x = startPosX; x < endPosX - 1; x++) {
+    for (var x = startPosX; x < endPosX; x++) {
       // Iterate over Y
-      for (var y = startPosY; y < endPosY - 1; y++) {
+      for (var y = startPosY; y < endPosY; y++) {
         // Get object at X,Y
         try {
-          final objectAtPosition = map[x][y];
+          final objectsAtPosition = List.of(map[x][y]);
           // If there is an object
-          if (objectAtPosition != null && objectAtPosition is BaseNpcComponent<Object>) {
-            foundObjects.add(objectAtPosition);
+          if (objectsAtPosition.isNotEmpty) {
+            foundObjects.addAll(objectsAtPosition.whereType<BaseNpcComponent<Object>>().toList());
           }
         } catch (e) {
+          print('x: $x, y: $y');
           print('a');
         }
       }
@@ -80,7 +124,7 @@ final class MapResolver extends Component {
       map.add(
         List.filled(
           mapSize.y,
-          null,
+          [],
         ),
       );
     }
@@ -104,7 +148,7 @@ final class MapResolver extends Component {
 
   FutureOr<void> _addObjectToMap(MapSpawnRequest request) async {
     // Add object to the map
-    map[request.position.x][request.position.y] = request.object;
+    map[request.position.x][request.position.y] = List.of(map[request.position.x][request.position.y])..add(request.object);
     // Add object to container
     await spawner.onSpawnObject(request);
   }

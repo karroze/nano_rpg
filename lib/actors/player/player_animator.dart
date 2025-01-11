@@ -99,6 +99,7 @@ final class PlayerAnimator extends SimpleCharacterAnimator<PlayerState> {
     required SpriteAnimationTicker ticker,
   }) {
     final _ = switch (state) {
+      PlayerState.idle => setupIdleAnimationTicker(ticker),
       PlayerState.attack1 || PlayerState.attack2 || PlayerState.attack3 => setupAttackAnimationTicker(ticker),
       PlayerState.hurt => setupHurtAnimationTicker(ticker),
       PlayerState.die => setupDieAnimationTicker(ticker),

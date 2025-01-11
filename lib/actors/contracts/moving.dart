@@ -12,10 +12,15 @@ mixin Moving on PositionComponent, Living {
 
   Vector2? walkPoint;
 
+  /// Method to make [Moving] object to face [targetPosition] direction.
+  void lookAtTarget(
+    Vector2 targetPosition,
+  );
+
   void handleWalkPoint(
     double dt, {
     required Vector2 walkPoint,
-    double endDistance = 0,
+    required double endDistance,
   }) {
     // Go to point
     final targetDirection = walkPoint - position;
@@ -66,26 +71,5 @@ mixin Moving on PositionComponent, Living {
 
     // Set walk point with an offset
     walkPoint = target + Vector2(xOffset, yOffset);
-  }
-
-  void lookAtTarget(
-    Vector2 targetPosition,
-  ) {
-    // Do nothing if dead
-    if (!isAlive) return;
-
-    // Calculate new scale
-    final newScaleX = switch (targetPosition.x - position.x >= 5) {
-      true => 1.0,
-      false => -1.0,
-    };
-
-    // print('Current scale: ${scale.x}\tNew scale: $newScaleX');
-
-    // Change scale if new scale differs
-    if (scale.x != newScaleX) {
-      // print('Changing scale');
-      scale.x = newScaleX;
-    }
   }
 }

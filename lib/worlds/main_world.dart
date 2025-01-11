@@ -17,6 +17,8 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
   late final MapSpawner mapSpawner;
   late final MapResolver mapResolver;
 
+  late final MapVector _mapSize;
+
   @override
   FutureOr<void> onLoad() async {
     super.onLoad();
@@ -40,7 +42,7 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
     required bool loadHud,
   }) async {
     // Get map size
-    final mapSize = MapVector(
+    _mapSize = MapVector(
       (game.size.x / _gridCellSize.x).ceil(),
       (game.size.y / _gridCellSize.y).ceil(),
     );
@@ -50,12 +52,16 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
       gameSize: game.size,
       gridCellSize: _gridCellSize,
       onSpawnObject: onSpawnObject,
+      spawnDebugEnemy: false,
+      spawnFriendlyWarrior: true,
+      spawnPlayer: true,
     );
 
     // Initialize map resolver and add it
     mapResolver = MapResolver(
-      mapSize: mapSize,
+      mapSize: _mapSize,
       spawner: mapSpawner,
+      loadMap: true,
     );
     await add(mapResolver);
 
@@ -95,10 +101,8 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
     required int distance,
   }) {
     // Get map position for pixel position
-    final mapPosition = MapVector(
-      (position.x / _gridCellSize.x).ceil(),
-      (position.y / _gridCellSize.y).ceil(),
-    );
+    final mapPosition = _getMapPositionFromWorldCoordinates(position);
+    // Get distance for objects lookup as a [MapVector]
     final mapDistance = MapVector(
       (distance / _gridCellSize.x).ceil(),
       (distance / _gridCellSize.y).ceil(),
@@ -109,4 +113,26 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
       distance: mapDistance,
     );
   }
+
+  /// Method to removed [object] from map.
+  void removeObjectFromMap(PositionComponent object) {
+    return mapResolver.removeObjectFromMap(object);
+  }
+
+  /// Method to update [object] position on the map.
+  void updateObjectFromMap(
+    PositionComponent object, {
+    required Vector2 newPosition,
+  }) {
+    return mapResolver.updateObjectFromMap(
+      object,
+      newPosition: _getMapPositionFromWorldCoordinates(newPosition),
+    );
+  }
+
+  /// Method to get [MapVector] from world [position]
+  MapVector _getMapPositionFromWorldCoordinates(Vector2 position) =>  MapVector(
+    ((position.x / _gridCellSize.x) - 1).ceil().clamp(0, _mapSize.x - 1),
+    ((position.y / _gridCellSize.y) - 1).ceil().clamp(0, _mapSize.y - 1),
+  );
 }

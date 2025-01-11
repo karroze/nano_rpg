@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
+import 'package:flame/effects.dart';
 import 'package:flame_nano_rpg/actors/animators/npc_animator_callbacks.dart';
 import 'package:flame_nano_rpg/actors/animators/simple_character_animator.dart';
 import 'package:flame_nano_rpg/actors/contracts/attackable.dart';
@@ -12,7 +13,6 @@ import 'package:flame_nano_rpg/actors/contracts/has_stamina.dart';
 import 'package:flame_nano_rpg/actors/contracts/interactable.dart';
 import 'package:flame_nano_rpg/actors/contracts/living.dart';
 import 'package:flame_nano_rpg/actors/contracts/moving.dart';
-import 'package:flame_nano_rpg/actors/npc/enemies/simple_enemy_component.dart';
 import 'package:flame_nano_rpg/actors/npc/friendly/friendly_npc_animator.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flame_nano_rpg/overlays/progress_bars/health_bar.dart';
@@ -50,18 +50,20 @@ abstract class BaseNpcComponent<State> extends PositionComponent
   /// Return null if no state update is required.
   State? provideStateUpdate(double dt);
 
-  /// Handle NPC interactions with other objects.
-  void handleInteractions();
-
   /// Returns a list of [Attackable] targets to interact with
-  List<BaseNpcComponent<Object>> filterTargets(List<BaseNpcComponent<Object>> foundTargets) => foundTargets;
+  List<BaseNpcComponent<Object>> filterTargets(List<BaseNpcComponent<Object>> foundTargets);
 
   /// Provide hitbox size.
   Vector2 get hitboxSize;
 
-  late List<BaseNpcComponent<Object>> enemyTargets = <BaseNpcComponent<Object>>[];
+  int get visibilityRange;
+
+  late List<BaseNpcComponent<Object>> availableTargets = <BaseNpcComponent<Object>>[];
   late final SimpleCharacterAnimator<State> animator;
   late final HealthBar healthBar;
+
+  /// Flag if NPC is dead.
+  bool isDead = false;
 
   @override
   @mustCallSuper
@@ -99,16 +101,10 @@ abstract class BaseNpcComponent<State> extends PositionComponent
       handleStamina(dt);
       // Handle attacking cooldown
       handleAttackingCooldown(dt);
-
+      // Lookup targets
+      handleTargetsLookup();
       // Handle NPC interactions
-      handleInteractions();
-
-      // Filter targets and store
-      final foundTargets = world.lookupObjectsForPosition(
-        position,
-        distance: 100,
-      );
-      enemyTargets = filterTargets(foundTargets);
+      handleInteractions(availableTargets);
 
       // If there is a walk point
       if (walkPoint != null && !isAttacking) {
@@ -124,8 +120,67 @@ abstract class BaseNpcComponent<State> extends PositionComponent
     healthBar.value = health;
     // Update current animator state if update is not null
     final stateUpdate = provideStateUpdate(dt);
-    if (stateUpdate != null) {
+
+    if (stateUpdate != null && stateUpdate != animator.current) {
       animator.current = stateUpdate;
+      // print(
+      //   '''
+      // \n
+      // === === ===
+      // $runtimeType
+      //
+      // OldState: ${animator.current}
+      // NewState: $stateUpdate
+      // === === ===
+      //
+      // ''',
+      // );
+    }
+
+    // If not alive anymore and not dead already
+    if (!isAlive && !isDead) {
+      isDead = true;
+      world.removeObjectFromMap(this);
+    }
+  }
+
+  @override
+  void handleWalkPoint(
+    double dt, {
+    required Vector2 walkPoint,
+    required double endDistance,
+  }) {
+    super.handleWalkPoint(
+      dt,
+      walkPoint: walkPoint,
+      endDistance: endDistance,
+    );
+    // Update object position on the map
+    world.updateObjectFromMap(
+      this,
+      newPosition: position,
+    );
+  }
+
+  @override
+  void handleInteractions(List<BaseNpcComponent<Object>> targets) {
+    // Do nothing if there are no targets
+    if (availableTargets.isEmpty) return;
+
+    // Iterate over targets starting from the last one
+    for(final currentTarget in availableTargets.reversed) {
+      // Switch target type
+      final targetPosition = currentTarget.position;
+      // Find distance
+      final distanceToTarget = (targetPosition - position).length - (currentTarget.size / 4).length;
+      // Interact with target
+      final hasInteraction = interactWith(
+        currentTarget,
+        distance: distanceToTarget,
+      );
+      
+      // Return from iteration over enemies if interaction happened
+      if(hasInteraction) return;
     }
   }
 
@@ -137,13 +192,14 @@ abstract class BaseNpcComponent<State> extends PositionComponent
     if (!isAlive) return;
 
     // Calculate new scale
-    final newScaleX = switch (targetPosition.x - position.x >= 5) {
-      true => 1.0,
-      false => -1.0,
+    final newScaleX = switch (velocity.x) {
+      > 0 => 1.0,
+      < 0 => -1.0,
+      _ => null,
     };
 
     // Change scale if new scale differs
-    if (animator.scale.x != newScaleX) {
+    if (newScaleX != null) {
       animator.scale.x = newScaleX;
     }
   }
@@ -186,5 +242,89 @@ abstract class BaseNpcComponent<State> extends PositionComponent
         anchor: Anchor.bottomCenter,
       ),
     );
+  }
+
+  /// Lookups possible targets, passes found items to [filterTargets] and assigns resulting list to [availableTargets].
+  void handleTargetsLookup() {
+    // Lookup targets for npc position and remove self
+    final foundTargets = world.lookupObjectsForPosition(
+      position,
+      distance: visibilityRange,
+    )..removeWhere((target) => target == this);
+    // Assign filtered result to enemy targets
+    availableTargets = filterTargets(foundTargets);
+  }
+
+  /// Handles attack with a [target].
+  bool handleEnemy(
+    BaseNpcComponent<Object> target, {
+    required double distance,
+  }) {
+    // Get target position
+    final targetPosition = target.position;
+    // Get its position
+    if (distance <= visibilityRange) {
+      lookAtTarget(targetPosition);
+    }
+
+    if (distance > moveDistance && distance <= visibilityRange) {
+      lookAtTarget(targetPosition);
+      return false; // TODO(georgii.savatkov): Maybe?
+    } else if (distance <= moveDistance && distance > attackRange) {
+      setWalkTarget(
+        target.position,
+        endDistance: attackRange,
+      );
+      return true;
+    } else if (distance <= attackRange && canAttack) {
+      attackTarget(
+        target: target,
+      );
+      return true;
+    }
+
+    // Return false if nothing happened
+    return false;
+  }
+
+  FutureOr<void> onIdleStarted() {
+    isAttacked = false;
+  }
+
+  FutureOr<void> onIdleEnded() => null;
+
+  FutureOr<void> onAttackStarted() {
+    isAttackingInProgress = true;
+    isAttacked = false;
+  }
+
+  FutureOr<void> onAttackEnded() {
+    isAttacking = false;
+    isAttackingInProgress = false;
+  }
+
+  FutureOr<void> onDieStarted() {
+    isAttacking = false;
+    isAttackingInProgress = false;
+  }
+
+  FutureOr<void> onHurtStarted() async {
+    isAttacking = false;
+    isAttackingInProgress = false;
+    await animator.add(
+      OpacityEffect.fadeOut(
+        EffectController(
+          alternate: true,
+          duration: 0.125,
+          repeatCount: 2,
+        ),
+      ),
+    );
+  }
+
+  FutureOr<void> onHurtEnded() {
+    isAttacked = false;
+    isAttacking = false;
+    isAttackedInProgress = false;
   }
 }

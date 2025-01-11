@@ -4,6 +4,8 @@ import 'package:flame_nano_rpg/actors/animators/animator_callbacks.dart';
 
 final class NpcAnimatorCallbacks extends AnimatorCallbacks {
   NpcAnimatorCallbacks({
+    this.onIdleStarted,
+    this.onIdleEnded,
     this.onAttackStarted,
     this.onAttackEnded,
     this.onHurtStarted,
@@ -11,6 +13,10 @@ final class NpcAnimatorCallbacks extends AnimatorCallbacks {
     this.onDieStarted,
     this.onDieEnded,
   });
+
+  FutureOr<void> Function()? onIdleStarted;
+
+  FutureOr<void> Function()? onIdleEnded;
 
   FutureOr<void> Function()? onAttackStarted;
 

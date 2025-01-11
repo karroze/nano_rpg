@@ -39,6 +39,7 @@ abstract class FriendlyNpcAnimator extends SimpleCharacterAnimator<NpcState> {
     required SpriteAnimationTicker ticker,
   }) {
     final _ = switch (state) {
+      NpcState.idle => setupIdleAnimationTicker(ticker),
       NpcState.attack => setupAttackAnimationTicker(ticker),
       NpcState.hurt => setupHurtAnimationTicker(ticker),
       NpcState.die => setupDieAnimationTicker(ticker),

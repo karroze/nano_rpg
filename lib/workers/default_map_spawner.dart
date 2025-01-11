@@ -21,27 +21,25 @@ final class DefaultMapSpawner extends MapSpawner {
     required this.gameSize,
     required this.gridCellSize,
     required super.onSpawnObject,
+    this.spawnPlayer = true,
+    this.spawnDebugEnemy = true,
+    this.spawnFriendlyWarrior = true,
   });
 
   final Vector2 gameSize;
   final Vector2 gridCellSize;
+
+  final bool spawnPlayer;
+  final bool spawnDebugEnemy;
+  final bool spawnFriendlyWarrior;
 
   static const xOffset = 60;
   static const yOffset = 60;
 
   @override
   FutureOr<List<MapSpawnRequest>> spawnCustomObjects(MapVector mapSize) {
-    // Create player
-    final player = Player(
-      position: gameSize / 2,
-    );
-    // Create friendly warrior
-    final friendlyWarrior = FriendlyWarriorComponent(
-      position: gameSize / 2 + Vector2(gridCellSize.x, 0),
-    );
-    final debugEnemy = EnemyOrcShamanComponent(
-      position: gameSize / 2 + Vector2(gridCellSize.x * 2, 0),
-    );
+    // List of spawn requests
+    final spawnRequests = <MapSpawnRequest>[];
 
     // Get center position of map size
     final mapSizeCenterVector = MapVector(
@@ -49,27 +47,46 @@ final class DefaultMapSpawner extends MapSpawner {
       (mapSize.y / 2).ceil(),
     );
 
-    // Return spawn requests
-    return [
-      MapSpawnRequest(
-        position: mapSizeCenterVector,
-        object: player,
-      ),
-      MapSpawnRequest(
-        position: MapVector(
-          mapSizeCenterVector.x + 1,
-          mapSizeCenterVector.y,
+    // Create player
+    if (spawnPlayer) {
+      spawnRequests.add(
+        MapSpawnRequest(
+          position: mapSizeCenterVector,
+          object: Player(
+            position: gameSize / 2,
+          ),
         ),
-        object: friendlyWarrior,
-      ),
-      MapSpawnRequest(
-        position: MapVector(
-          mapSizeCenterVector.x + 2,
-          mapSizeCenterVector.y,
+      );
+    }
+
+    if (spawnFriendlyWarrior) {
+      spawnRequests.add(
+        MapSpawnRequest(
+          position: MapVector(
+            mapSizeCenterVector.x + 1,
+            mapSizeCenterVector.y,
+          ),
+          object: FriendlyWarriorComponent(
+            position: gameSize / 2 + Vector2(gridCellSize.x, 0),
+          ),
         ),
-        object: debugEnemy,
-      ),
-    ];
+      );
+    }
+
+    if (spawnDebugEnemy) {
+      spawnRequests.add(
+        MapSpawnRequest(
+          position: MapVector(
+            mapSizeCenterVector.x + 2,
+            mapSizeCenterVector.y,
+          ),
+          object: EnemyOrcShamanComponent(
+            position: gameSize / 2 + Vector2(gridCellSize.x * 2, 0),
+          ),
+        ),
+      );
+    }
+    return spawnRequests;
   }
 
   @override

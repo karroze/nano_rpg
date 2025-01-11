@@ -39,6 +39,7 @@ abstract class EnemyNpcAnimator extends SimpleCharacterAnimator<EnemyState> {
     required SpriteAnimationTicker ticker,
   }) {
     final _ = switch (state) {
+      EnemyState.idle => setupIdleAnimationTicker(ticker),
       EnemyState.attack => setupAttackAnimationTicker(ticker),
       EnemyState.hurt => setupHurtAnimationTicker(ticker),
       EnemyState.die => setupDieAnimationTicker(ticker),

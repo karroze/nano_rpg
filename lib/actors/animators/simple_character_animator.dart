@@ -13,6 +13,13 @@ abstract class SimpleCharacterAnimator<State> extends BaseCharacterAnimator<Stat
   });
 
   /// Sets attack animation ticker callbacks.
+  FutureOr<void> setupIdleAnimationTicker(SpriteAnimationTicker ticker) {
+    ticker
+      ..onStart = animatorCallbacks?.onIdleStarted
+      ..onComplete = animatorCallbacks?.onIdleEnded;
+  }
+
+  /// Sets attack animation ticker callbacks.
   FutureOr<void> setupAttackAnimationTicker(SpriteAnimationTicker ticker) {
     ticker
       ..onStart = animatorCallbacks?.onAttackStarted

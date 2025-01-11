@@ -6,6 +6,7 @@ import 'package:flame/extensions.dart';
 import 'package:flame_nano_rpg/actors/animators/npc_animator_callbacks.dart';
 import 'package:flame_nano_rpg/actors/animators/simple_character_animator.dart';
 import 'package:flame_nano_rpg/actors/npc/base_npc_component.dart';
+import 'package:flame_nano_rpg/actors/npc/enemies/simple_enemy_component.dart';
 import 'package:flame_nano_rpg/actors/npc/friendly/friendly_warrior/friendly_warrior_animator.dart';
 import 'package:flame_nano_rpg/actors/npc/friendly/npc_state.dart';
 import 'package:flame_nano_rpg/actors/player/player.dart';
@@ -17,6 +18,7 @@ final class FriendlyWarriorComponent extends BaseNpcComponent<NpcState> {
   }) : super(
           size: Vector2(96, 96),
           anchor: Anchor.center,
+          priority: 2,
         );
 
   Player? player;
@@ -42,7 +44,8 @@ final class FriendlyWarriorComponent extends BaseNpcComponent<NpcState> {
   @override
   double get moveDistance => 100;
 
-  double get visibilityRange => 150;
+  @override
+  int get visibilityRange => 150;
 
   @override
   double get attackRange => 25;
@@ -74,6 +77,8 @@ final class FriendlyWarriorComponent extends BaseNpcComponent<NpcState> {
 
   @override
   FutureOr<NpcAnimatorCallbacks?> provideAnimationCallbacks() => NpcAnimatorCallbacks()
+    ..onIdleStarted = onIdleStarted
+    ..onIdleEnded = onIdleStarted
     ..onAttackStarted = onAttackStarted
     ..onAttackEnded = onAttackEnded
     ..onHurtStarted = onHurtStarted
@@ -113,81 +118,74 @@ final class FriendlyWarriorComponent extends BaseNpcComponent<NpcState> {
     };
   }
 
+  // @override
+  // void handleInteractions(List<BaseNpcComponent<Object>> targets) {
+  //   // Do nothing if there are no targets
+  //   if (availableTargets.isEmpty) return;
+  //
+  //   // Check if there's a player
+  //   final player = targets.whereType<Player>().firstOrNull;
+  //   if (player != null) {
+  //     // Handle interaction with player and return
+  //     _handlePlayerInteraction(player);
+  //     return;
+  //   }
+  //
+  //   // Otherwise proceed with super implementation
+  //   super.handleInteractions(targets);
+  // }
+
   @override
-  void interactWith() {
-    // TODO: implement interactWith
+  bool interactWith(
+    BaseNpcComponent<Object> object, {
+    required double distance,
+  }) {
+    return switch (object) {
+      final Player player => _handlePlayerInteraction(player),
+      final SimpleEnemyComponent enemy => handleEnemy(
+          enemy,
+          distance: distance,
+        ),
+      _ => false,
+    };
   }
 
   @override
-  void handleInteractions() {
-    // TODO(georgii.savatkov): This is bad but ok for now
-    // Find player if not set
-    player ??= game.findByKeyName('player');
-
-    // If there is a player
-    if (player != null) {
-      // Check if player has enemies
-      if (player!.enemyTargets.isNotEmpty) {
-        // Get last
-        final playerEnemy = player!.enemyTargets.last;
-        // Handle enemy interaction
-        _handleEnemyInteraction(playerEnemy);
-        return;
-      }
-
-      // Handle player interaction
-      _handlePlayerInteraction(player!);
-    }
+  List<BaseNpcComponent<Object>> filterTargets(List<BaseNpcComponent<Object>> foundTargets) {
+    final player = foundTargets.whereType<Player>().toList();
+    final enemies = foundTargets.whereType<SimpleEnemyComponent>().toList(); // TODO(georgii.savatkov): This type lookup is bad, fix later
+    return [
+      ...player,
+      ...enemies,
+    ];
   }
 
   /// Handles interaction with a [player].
-  void _handlePlayerInteraction(Player player) {
+  bool _handlePlayerInteraction(Player player) {
+    // // Check if player has enemies
+    // if (player!.enemyTargets.isNotEmpty) {
+    //   // Get last
+    //   final playerEnemy = player!.enemyTargets.last;
+    //   // Handle enemy interaction
+    //   _handleEnemyInteraction(playerEnemy);
+    //   return;
+    // }
     // Get its position
     final playerPosition = player.position;
     // Find distance
     final distanceToPlayer = (playerPosition - position).length - (player.size / 4).length;
 
-    if (distanceToPlayer <= visibilityRange) {
-      lookAtTarget(playerPosition);
-    }
-
-    if (distanceToPlayer > moveDistance && distanceToPlayer <= visibilityRange) {
-      lookAtTarget(playerPosition);
-    } else if (distanceToPlayer <= moveDistance) {
-      setWalkTarget(player.position);
-    }
-  }
-
-  /// Handles interaction with an [enemy].
-  void _handleEnemyInteraction(BaseNpcComponent<Object> enemy) {
-    // Get its position
-    final enemyPosition = enemy.position;
-    // Find distance
-    final distanceToEnemy = (enemyPosition - position).length - (enemy.size / 4).length;
-
-    if (distanceToEnemy <= visibilityRange) {
-      lookAtTarget(enemyPosition);
-    }
-
-    if (distanceToEnemy > attackRange) {
-      setWalkTarget(enemy.position);
-    } else if (distanceToEnemy <= attackRange && canAttack) {
-      attackTarget(
-        target: enemy,
+    // Go to player if within move distance
+    if (distanceToPlayer <= moveDistance && distanceToPlayer > attackRange) {
+      setWalkTarget(
+        player.position,
+        endDistance: attackRange,
       );
+      return true;
     }
-  }
 
-  FutureOr<void> onAttackStarted() {
-    isAttackingInProgress = true;
+    return false;
   }
-
-  FutureOr<void> onAttackEnded() {
-    isAttacking = false;
-    isAttackingInProgress = false;
-  }
-
-  FutureOr<void> onDieStarted() => null;
 
   FutureOr<void> onDieEnded() async {
     await animator.add(
@@ -206,23 +204,5 @@ final class FriendlyWarriorComponent extends BaseNpcComponent<NpcState> {
     );
     // await onDie();
     removeFromParent();
-  }
-
-  FutureOr<void> onHurtStarted() async {
-    await animator.add(
-      OpacityEffect.fadeOut(
-        EffectController(
-          alternate: true,
-          duration: 0.125,
-          repeatCount: 2,
-        ),
-      ),
-    );
-  }
-
-  FutureOr<void> onHurtEnded() {
-    isAttacked = false;
-    isAttacking = false;
-    isAttackedInProgress = false;
   }
 }
