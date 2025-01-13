@@ -58,11 +58,7 @@ final class MapResolver extends Component {
     // Remove object from map
     removeObjectFromMap(object);
     // Set new position for object
-    try {
-      map[newPosition.x][newPosition.y] = List.of(map[newPosition.x][newPosition.y])..add(object);
-    } catch (_) {
-      print('B');
-    }
+    map[newPosition.x][newPosition.y] = List.of(map[newPosition.x][newPosition.y])..add(object);
   }
 
   MapVector? _getMapPositionForObject(PositionComponent object) {
@@ -102,15 +98,10 @@ final class MapResolver extends Component {
       // Iterate over Y
       for (var y = startPosY; y < endPosY; y++) {
         // Get object at X,Y
-        try {
-          final objectsAtPosition = List.of(map[x][y]);
-          // If there is an object
-          if (objectsAtPosition.isNotEmpty) {
-            foundObjects.addAll(objectsAtPosition.whereType<BaseNpcComponent<Object>>().toList());
-          }
-        } catch (e) {
-          print('x: $x, y: $y');
-          print('a');
+        final objectsAtPosition = List.of(map[x][y]);
+        // If there is an object
+        if (objectsAtPosition.isNotEmpty) {
+          foundObjects.addAll(objectsAtPosition.whereType<BaseNpcComponent<Object>>().toList());
         }
       }
     }

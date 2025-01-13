@@ -1,3 +1,1 @@
-mixin Interacting {
-
-}
+mixin Interacting {}

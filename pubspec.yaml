@@ -6,7 +6,6 @@ version: 0.0.3
 environment:
   sdk: ^3.6.0
 
-
 dependencies:
   flame: ^1.23.0
   flutter:
