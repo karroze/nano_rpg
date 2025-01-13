@@ -58,15 +58,6 @@ final class Hud extends PositionComponent with HasGameRef<NanoRpgGame> {
       showLabel: false,
     );
     await add(_staminaBar);
-
-    await add(
-      FpsTextComponent(
-        position: Vector2(
-          20,
-          20,
-        ),
-      ),
-    );
   }
 
   @override

@@ -74,6 +74,14 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
           ),
         ),
       );
+      await game.camera.viewport.add(
+        FpsTextComponent(
+          position: Vector2(
+            20,
+            20,
+          ),
+        ),
+      );
     }
 
     game.gameReset = false;
