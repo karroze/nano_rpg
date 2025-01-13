@@ -53,42 +53,25 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
       gridCellSize: _gridCellSize,
       onSpawnObject: onSpawnObject,
       spawnDebugEnemy: false,
-      spawnFriendlyWarrior: true,
-      spawnPlayer: true,
     );
 
     // Initialize map resolver and add it
     mapResolver = MapResolver(
       mapSize: _mapSize,
       spawner: mapSpawner,
-      loadMap: true,
     );
     await add(mapResolver);
 
     if (loadHud) {
-      // final viewport = FixedSizeViewport(
-      //   800,
-      //   600,
-      // )..add(Hud());
-      // final cameraComponent = CameraComponent.withFixedResolution(
-      //   world: this,
-      //   width: 800,
-      //   height: 600,
-      // )
-      //   ..viewfinder.anchor = Anchor.topLeft
-      //   ..viewport = viewport;
-      //   // ..follow(
-      //   //   player,
-      //   //   snap: true,
-      //   // );
-      // game.camera = cameraComponent;
-
       // Set camera anchor
       game.camera.viewfinder.anchor = Anchor.topLeft;
       // Add HUD to the viewport
       await game.camera.viewport.add(
         Hud(
-          position: Vector2(game.size.x / 2, game.size.y - 15),
+          position: Vector2(
+            game.size.x / 2,
+            game.size.y - 15,
+          ),
         ),
       );
     }
@@ -96,6 +79,7 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
     game.gameReset = false;
   }
 
+  /// Lookup for [BaseNpcComponent] objects within [distance] at given [position] on the screen.
   List<BaseNpcComponent<Object>> lookupObjectsForPosition(
     Vector2 position, {
     required int distance,
@@ -131,8 +115,8 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
   }
 
   /// Method to get [MapVector] from world [position]
-  MapVector _getMapPositionFromWorldCoordinates(Vector2 position) =>  MapVector(
-    ((position.x / _gridCellSize.x) - 1).ceil().clamp(0, _mapSize.x - 1),
-    ((position.y / _gridCellSize.y) - 1).ceil().clamp(0, _mapSize.y - 1),
-  );
+  MapVector _getMapPositionFromWorldCoordinates(Vector2 position) => MapVector(
+        ((position.x / _gridCellSize.x) - 1).ceil().clamp(0, _mapSize.x - 1),
+        ((position.y / _gridCellSize.y) - 1).ceil().clamp(0, _mapSize.y - 1),
+      );
 }

@@ -118,23 +118,6 @@ final class FriendlyWarriorComponent extends BaseNpcComponent<NpcState> {
     };
   }
 
-  // @override
-  // void handleInteractions(List<BaseNpcComponent<Object>> targets) {
-  //   // Do nothing if there are no targets
-  //   if (availableTargets.isEmpty) return;
-  //
-  //   // Check if there's a player
-  //   final player = targets.whereType<Player>().firstOrNull;
-  //   if (player != null) {
-  //     // Handle interaction with player and return
-  //     _handlePlayerInteraction(player);
-  //     return;
-  //   }
-  //
-  //   // Otherwise proceed with super implementation
-  //   super.handleInteractions(targets);
-  // }
-
   @override
   bool interactWith(
     BaseNpcComponent<Object> object, {
@@ -187,6 +170,7 @@ final class FriendlyWarriorComponent extends BaseNpcComponent<NpcState> {
     return false;
   }
 
+  @override
   FutureOr<void> onDieEnded() async {
     await animator.add(
       OpacityEffect.fadeOut(

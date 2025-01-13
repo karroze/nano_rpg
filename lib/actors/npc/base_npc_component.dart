@@ -50,16 +50,22 @@ abstract class BaseNpcComponent<State> extends PositionComponent
   /// Return null if no state update is required.
   State? provideStateUpdate(double dt);
 
-  /// Returns a list of [Attackable] targets to interact with
+  /// Returns a list of [BaseNpcComponent] targets to interact with
   List<BaseNpcComponent<Object>> filterTargets(List<BaseNpcComponent<Object>> foundTargets);
 
-  /// Provide hitbox size.
+  /// Hitbox [Vector2] size for the NPC.
   Vector2 get hitboxSize;
 
+  /// Visibility [int] range for NPC in pixels.
   int get visibilityRange;
 
+  /// List of current targets available to the NPC.
   late List<BaseNpcComponent<Object>> availableTargets = <BaseNpcComponent<Object>>[];
+
+  /// Assigned animator
   late final SimpleCharacterAnimator<State> animator;
+
+  /// Assigned [HealthBar] ui component.
   late final HealthBar healthBar;
 
   /// Flag if NPC is dead.
@@ -89,12 +95,6 @@ abstract class BaseNpcComponent<State> extends PositionComponent
   void update(double dt) {
     super.update(dt);
 
-    // // Set vero velocity
-    // velocity.setValues(
-    //   0,
-    //   0,
-    // );
-
     // Handle stamina updated and movement if is alive
     if (isAlive) {
       // Handle stamina regeneration
@@ -121,20 +121,9 @@ abstract class BaseNpcComponent<State> extends PositionComponent
     // Update current animator state if update is not null
     final stateUpdate = provideStateUpdate(dt);
 
+    // If there is a state change, set new state
     if (stateUpdate != null && stateUpdate != animator.current) {
       animator.current = stateUpdate;
-      // print(
-      //   '''
-      // \n
-      // === === ===
-      // $runtimeType
-      //
-      // OldState: ${animator.current}
-      // NewState: $stateUpdate
-      // === === ===
-      //
-      // ''',
-      // );
     }
 
     // If not alive anymore and not dead already
@@ -168,7 +157,7 @@ abstract class BaseNpcComponent<State> extends PositionComponent
     if (availableTargets.isEmpty) return;
 
     // Iterate over targets starting from the last one
-    for(final currentTarget in availableTargets.reversed) {
+    for (final currentTarget in availableTargets.reversed) {
       // Switch target type
       final targetPosition = currentTarget.position;
       // Find distance
@@ -178,9 +167,9 @@ abstract class BaseNpcComponent<State> extends PositionComponent
         currentTarget,
         distance: distanceToTarget,
       );
-      
+
       // Return from iteration over enemies if interaction happened
-      if(hasInteraction) return;
+      if (hasInteraction) return;
     }
   }
 
@@ -198,10 +187,107 @@ abstract class BaseNpcComponent<State> extends PositionComponent
       _ => null,
     };
 
-    // Change scale if new scale differs
+    // Change scale if new scale is set
     if (newScaleX != null) {
       animator.scale.x = newScaleX;
     }
+  }
+
+  /// Lookups possible targets, passes found items to [filterTargets] and assigns resulting list to [availableTargets].
+  void handleTargetsLookup() {
+    // Lookup targets for npc position and remove self
+    final foundTargets = world.lookupObjectsForPosition(
+      position,
+      distance: visibilityRange,
+    )..removeWhere((target) => target == this);
+    // Assign filtered result to enemy targets
+    availableTargets = filterTargets(foundTargets);
+  }
+
+  /// Handles interaction with a [target].
+  ///
+  /// [distance] can be used to determine what type of interaction to perform.
+  bool handleEnemy(
+    BaseNpcComponent<Object> target, {
+    required double distance,
+  }) {
+    // Get target position
+    final targetPosition = target.position;
+
+    // Look at enemy if within visibility range but not within move range
+    if (distance > moveDistance && distance <= visibilityRange) {
+      lookAtTarget(targetPosition);
+      return false;
+    }
+    // Set walk target to the enemy if within move range but not within attack range
+    else if (distance <= moveDistance && distance > attackRange) {
+      setWalkTarget(
+        target.position,
+        endDistance: attackRange,
+      );
+      return true;
+    }
+    // Attack enemy if within attack range and can attack
+    else if (distance <= attackRange && canAttack) {
+      attackTarget(
+        target: target,
+      );
+      return true;
+    }
+
+    // Return false if nothing happened
+    return false;
+  }
+
+  /// Animation callback when idle animation has started.
+  FutureOr<void> onIdleStarted() {
+    isAttacked = false;
+  }
+
+  /// Animation callback when idle animation has ended.
+  FutureOr<void> onIdleEnded() => null;
+
+  /// Animation callback when attack animation has started.
+  FutureOr<void> onAttackStarted() {
+    isAttackingInProgress = true;
+    isAttacked = false;
+  }
+
+  /// Animation callback when attack animation has ended.
+  FutureOr<void> onAttackEnded() {
+    isAttacking = false;
+    isAttackingInProgress = false;
+  }
+
+  /// Animation callback when die animation has started.
+  FutureOr<void> onDieStarted() {
+    isAttacking = false;
+    isAttackingInProgress = false;
+  }
+
+  /// Animation callback when die animation has ended.
+  FutureOr<void> onDieEnded() => null;
+
+  /// Animation callback when hurt animation has started.
+  FutureOr<void> onHurtStarted() async {
+    isAttacking = false;
+    isAttackingInProgress = false;
+    await animator.add(
+      OpacityEffect.fadeOut(
+        EffectController(
+          alternate: true,
+          duration: 0.125,
+          repeatCount: 2,
+        ),
+      ),
+    );
+  }
+
+  /// Animation callback when hurt animation has ended.
+  FutureOr<void> onHurtEnded() {
+    isAttacked = false;
+    isAttacking = false;
+    isAttackedInProgress = false;
   }
 
   /// Method to initialize npc UI.
@@ -242,89 +328,5 @@ abstract class BaseNpcComponent<State> extends PositionComponent
         anchor: Anchor.bottomCenter,
       ),
     );
-  }
-
-  /// Lookups possible targets, passes found items to [filterTargets] and assigns resulting list to [availableTargets].
-  void handleTargetsLookup() {
-    // Lookup targets for npc position and remove self
-    final foundTargets = world.lookupObjectsForPosition(
-      position,
-      distance: visibilityRange,
-    )..removeWhere((target) => target == this);
-    // Assign filtered result to enemy targets
-    availableTargets = filterTargets(foundTargets);
-  }
-
-  /// Handles attack with a [target].
-  bool handleEnemy(
-    BaseNpcComponent<Object> target, {
-    required double distance,
-  }) {
-    // Get target position
-    final targetPosition = target.position;
-    // Get its position
-    if (distance <= visibilityRange) {
-      lookAtTarget(targetPosition);
-    }
-
-    if (distance > moveDistance && distance <= visibilityRange) {
-      lookAtTarget(targetPosition);
-      return false; // TODO(georgii.savatkov): Maybe?
-    } else if (distance <= moveDistance && distance > attackRange) {
-      setWalkTarget(
-        target.position,
-        endDistance: attackRange,
-      );
-      return true;
-    } else if (distance <= attackRange && canAttack) {
-      attackTarget(
-        target: target,
-      );
-      return true;
-    }
-
-    // Return false if nothing happened
-    return false;
-  }
-
-  FutureOr<void> onIdleStarted() {
-    isAttacked = false;
-  }
-
-  FutureOr<void> onIdleEnded() => null;
-
-  FutureOr<void> onAttackStarted() {
-    isAttackingInProgress = true;
-    isAttacked = false;
-  }
-
-  FutureOr<void> onAttackEnded() {
-    isAttacking = false;
-    isAttackingInProgress = false;
-  }
-
-  FutureOr<void> onDieStarted() {
-    isAttacking = false;
-    isAttackingInProgress = false;
-  }
-
-  FutureOr<void> onHurtStarted() async {
-    isAttacking = false;
-    isAttackingInProgress = false;
-    await animator.add(
-      OpacityEffect.fadeOut(
-        EffectController(
-          alternate: true,
-          duration: 0.125,
-          repeatCount: 2,
-        ),
-      ),
-    );
-  }
-
-  FutureOr<void> onHurtEnded() {
-    isAttacked = false;
-    isAttacking = false;
-    isAttackedInProgress = false;
   }
 }

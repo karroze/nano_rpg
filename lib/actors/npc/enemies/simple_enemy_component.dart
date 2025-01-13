@@ -95,6 +95,7 @@ abstract class SimpleEnemyComponent extends BaseNpcComponent<EnemyState> {
     ];
   }
 
+  @override
   FutureOr<void> onDieEnded() async {
     await animator.add(
       OpacityEffect.fadeOut(

@@ -28,7 +28,7 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
         );
 
   @override
-  int get maxHealth => 10000;
+  int get maxHealth => 1000;
 
   @override
   int get maxStamina => 100;
@@ -153,17 +153,7 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
     super.onCollision(intersectionPoints, other);
 
-    if (other is SimpleEnemyComponent) {
-      // final lookingAtEnemyOnRight = animator.scale.x >= 1 && other.position.x >= position.x;
-      // final lookingAtEnemyOnLeft = animator.scale.x < 1 && other.position.x < position.x;
-      // if (lookingAtEnemyOnRight || lookingAtEnemyOnLeft) {
-      //   // Add enemy to the enemies list
-      //   if (enemyTargets.contains(other)) {
-      //     enemyTargets.remove(other);
-      //   }
-      //   enemyTargets.add(other);
-      // }
-    } else if (other is Tree) {
+    if (other is Tree) {
       final targetDirection = other.position - position;
       collisionDirection.setValues(
         targetDirection.x == 0 ? 0 : targetDirection.x / targetDirection.x.abs(),
@@ -177,8 +167,6 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
     super.onCollisionEnd(other);
     if (other is Tree) {
       collisionDirection.setValues(0, 0);
-    } else if (other is SimpleEnemyComponent) {
-      availableTargets.remove(other);
     }
   }
 
@@ -187,13 +175,11 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
   PlayerState? provideStateUpdate(double dt) {
     // Set dead if not alive
     if (!isAlive) {
-      // print('Animation handling: isAlive: false, setting PlayerState.die');
       return PlayerState.die;
     }
     // print('Animation handling: isAlive: true');
-    // If attacked choose between hurt and dead animation based on if alive
+
     if (isAttacked) {
-      // print('Animation handling: isAttacked: true, isAttackedInProgress: $isAttackedInProgress');
       // If there is an attacking in progress, do nothing
       if (isAttackedInProgress || isAttackingInProgress) return null;
       // Get new state
@@ -201,30 +187,22 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
         true => PlayerState.hurt,
         false => PlayerState.die,
       };
-      // print('Animation handling: isAttacked: true, isAlive: $isAlive, setting state: $damageState');
     }
-    // print('Animation handling: isAttacked: false');
 
     // If attacking
     if (isAttacking) {
-      // print('Animation handling: isAttacking: true, isAttackingInProgress: $isAttackingInProgress');
       // If there is an attacking in progress, do nothing
       if (isAttackingInProgress) return null;
 
-      // print('Animation handling: isAttacking: true, isAttackingInProgress: false, setting state: $current');
       // Choose random attack animation
       return [PlayerState.attack1, PlayerState.attack2, PlayerState.attack3].random();
     }
-
-    // print('Animation handling: isAttacking: false');
 
     // Handle idle or walking
     return switch (velocity.isZero()) {
       true => PlayerState.idle,
       false => PlayerState.walk,
     };
-
-    // print('Animation handling: setting state: $current');
   }
 
   @override
@@ -257,6 +235,7 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
     return false;
   }
 
+  @override
   FutureOr<void> onDieEnded() async {
     // Wait for some time
     await Future<void>.delayed(
@@ -295,33 +274,6 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
       diffY,
     );
     return true;
-  }
-
-  /// Changes [velocity] based on presence and state of [collisionDirection].
-  bool _handleCollisionDirection() {
-    if (velocity.x != 0 && velocity.y == 0) {
-      if (velocity.x == collisionDirection.x) {
-        velocity.setValues(0, 0);
-      } else {
-        velocity.setValues(velocity.x, 0);
-      }
-      return true;
-    } else if (velocity.x == 0 && velocity.y != 0) {
-      if (velocity.y == collisionDirection.y) {
-        velocity.setValues(0, 0);
-      } else {
-        velocity.setValues(0, velocity.y);
-      }
-      return true;
-    }
-
-    return false;
-  }
-
-  /// Clears found enemy targets at the end of every update.
-  void _disposeEnemyTargets() {
-    // Clear enemy targets
-    availableTargets.clear();
   }
 
   /// Handles attacking
