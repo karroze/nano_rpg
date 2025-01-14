@@ -5,4 +5,7 @@ abstract class MushroomComponent extends FoodComponent {
     required super.position,
     required super.size,
   });
+
+  @override
+  double get interactionDistance => 25;
 }

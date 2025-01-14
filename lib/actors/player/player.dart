@@ -12,7 +12,6 @@ import 'package:flame_nano_rpg/actors/contracts/healable.dart';
 import 'package:flame_nano_rpg/actors/contracts/interactable.dart';
 import 'package:flame_nano_rpg/actors/npc/base_npc_component.dart';
 import 'package:flame_nano_rpg/actors/npc/enemies/simple_enemy_component.dart';
-import 'package:flame_nano_rpg/actors/objects/tree.dart';
 import 'package:flame_nano_rpg/actors/player/player_animator.dart';
 import 'package:flame_nano_rpg/actors/player/player_state.dart';
 import 'package:flame_nano_rpg/objects/attack.dart';
@@ -210,7 +209,7 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
     double distance,
   ) {
     // Check that within interaction distance
-    if (distance > interactionDistance) return false;
+    if (distance > eatable.interactionDistance) return false;
 
     // Try to eat item
     final wasEaten = eatable.eatBy(this);

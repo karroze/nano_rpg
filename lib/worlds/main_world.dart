@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flame/components.dart';
 import 'package:flame_nano_rpg/actors/contracts/interactable.dart';
-import 'package:flame_nano_rpg/actors/npc/base_npc_component.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flame_nano_rpg/overlays/hud.dart';
 import 'package:flame_nano_rpg/workers/base_map_resolver.dart';

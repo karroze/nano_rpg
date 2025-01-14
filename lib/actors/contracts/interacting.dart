@@ -1,10 +1,6 @@
 import 'package:flame_nano_rpg/actors/contracts/interactable.dart';
 
 mixin Interacting {
-
-  /// Distance for interaction with objects.
-  double get interactionDistance;
-
   /// Handle NPC interactions with other objects.
   void handleInteractions(List<Interactable> targets);
 
