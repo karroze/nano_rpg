@@ -29,6 +29,13 @@ abstract class SimpleNpcComponent extends BaseNpcComponent<NpcState> {
     ..onDieEnded = onDieEnded;
 
   @override
+  InteractionHandler? provideInteraction(
+    Interactable other, {
+    required InteractionPayload payload,
+  }) =>
+      null;
+
+  @override
   NpcState? provideStateUpdate(double dt) {
     // Set dead if not alive
     if (!isAlive) {

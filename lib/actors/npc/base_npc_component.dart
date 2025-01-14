@@ -163,8 +163,8 @@ abstract class BaseNpcComponent<State> extends PositionComponent
       // Switch target type
       final targetPosition = currentTarget.position;
       // Calculate interaction offset based on size
-      final distanceOffsetX = currentTarget.position.x > position.x ? size.x / 4: currentTarget.size.x / 4;
-      final distanceOffsetY = currentTarget.position.y > position.y ? size.y / 4: currentTarget.size.y / 4;
+      final distanceOffsetX = currentTarget.position.x > position.x ? size.x / 4 : currentTarget.size.x / 4;
+      final distanceOffsetY = currentTarget.position.y > position.y ? size.y / 4 : currentTarget.size.y / 4;
 
       // Find distance
       final distanceToTarget = (targetPosition - position).length - Vector2(distanceOffsetX, distanceOffsetY).length;
@@ -172,6 +172,13 @@ abstract class BaseNpcComponent<State> extends PositionComponent
       final hasInteraction = interactWith(
         currentTarget,
         distance: distanceToTarget,
+      );
+
+      provideInteraction(
+        currentTarget,
+        payload: InteractionPayload(
+          distance: distanceToTarget,
+        ),
       );
 
       // Return from iteration over enemies if interaction happened

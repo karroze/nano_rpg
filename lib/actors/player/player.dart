@@ -179,11 +179,26 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
           enemy,
           distance: distance,
         ),
-      final Eatable eatable => handleEatable(
-          eatable,
-          distance,
-        ),
+      // final Eatable eatable => handleEatable(
+      //     eatable,
+      //     distance,
+      //   ),
       _ => false,
+    };
+  }
+
+  @override
+  InteractionHandler? provideInteraction(
+    Interactable other, {
+    required InteractionPayload payload,
+  }) {
+    return switch (other) {
+      final Eatable eatable => HealInteractionHandler(
+          eatable: eatable,
+          target: this,
+          payload: payload,
+        ),
+      _ => null,
     };
   }
 

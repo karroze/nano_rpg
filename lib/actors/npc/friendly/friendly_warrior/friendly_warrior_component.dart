@@ -53,7 +53,7 @@ final class FriendlyWarriorComponent extends BaseNpcComponent<NpcState> {
 
   @override
   double get attackDistance => 25;
-  
+
   @override
   double get interactionDistance => 25;
 
@@ -93,6 +93,13 @@ final class FriendlyWarriorComponent extends BaseNpcComponent<NpcState> {
     ..onHurtStarted = onHurtStarted
     ..onHurtEnded = onHurtEnded
     ..onDieEnded = onDieEnded;
+
+  @override
+  InteractionHandler? provideInteraction(
+    Interactable other, {
+    required InteractionPayload payload,
+  }) =>
+      null;
 
   @override
   NpcState? provideStateUpdate(double dt) {
