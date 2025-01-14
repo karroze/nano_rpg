@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:flame/components.dart';
 import 'package:flame_nano_rpg/actors/animators/simple_character_animator.dart';
-import 'package:flame_nano_rpg/actors/npc/enemies/enemy_state.dart';
 import 'package:flame_nano_rpg/actors/npc/enemies/orc_shaman/enemy_orc_shaman_animator.dart';
 import 'package:flame_nano_rpg/actors/npc/enemies/simple_enemy_component.dart';
+import 'package:flame_nano_rpg/actors/npc/friendly/npc_state.dart';
 import 'package:flame_nano_rpg/objects/attack.dart';
 
-final class EnemyOrcShamanComponent extends SimpleEnemyComponent {
+final class EnemyOrcShamanComponent extends SimpleNpcComponent {
   EnemyOrcShamanComponent({
     required super.position,
   }) : super(
@@ -33,14 +33,27 @@ final class EnemyOrcShamanComponent extends SimpleEnemyComponent {
   @override
   double get moveSpeed => 50;
 
+  // --- Distances ---
+
   @override
   double get moveDistance => 100;
 
   @override
-  double get attackRange => 25;
+  double get attackDistance => 25;
+
+  @override
+  double get interactionDistance => 25;
+
+  @override
+  int get visibilityDistance => 150;
+
+  // --- End Distances ---
 
   @override
   double get damageCooldownTimeframeSeconds => 1.5;
+
+  @override
+  Vector2 get hitboxSize => Vector2(68, 64);
 
   @override
   List<Attack> get availableAttacks => [
@@ -54,7 +67,7 @@ final class EnemyOrcShamanComponent extends SimpleEnemyComponent {
       ];
 
   @override
-  FutureOr<SimpleCharacterAnimator<EnemyState>> provideAnimationGroupComponent() => EnemyOrcShamanAnimator(
+  FutureOr<SimpleCharacterAnimator<NpcState>> provideAnimationGroupComponent() => EnemyOrcShamanAnimator(
         position: size / 2,
         size: size,
         anchor: Anchor.center,

@@ -1,7 +1,7 @@
 import 'package:flame/components.dart';
-import 'package:flame_nano_rpg/actors/npc/friendly/friendly_npc_animator.dart';
+import 'package:flame_nano_rpg/actors/animators/default_npc_animator.dart';
 
-final class FriendlyWarriorAnimator extends FriendlyNpcAnimator {
+final class FriendlyWarriorAnimator extends DefaultNpcAnimator {
   FriendlyWarriorAnimator({
     required super.position,
     required super.size,

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
+import 'package:flame_nano_rpg/actors/animators/default_npc_animator.dart';
 import 'package:flame_nano_rpg/actors/animators/npc_animator_callbacks.dart';
 import 'package:flame_nano_rpg/actors/animators/simple_character_animator.dart';
 import 'package:flame_nano_rpg/actors/contracts/attackable.dart';
@@ -11,9 +12,9 @@ import 'package:flame_nano_rpg/actors/contracts/attacking_with_cooldown.dart';
 import 'package:flame_nano_rpg/actors/contracts/attacking_with_stamina.dart';
 import 'package:flame_nano_rpg/actors/contracts/has_stamina.dart';
 import 'package:flame_nano_rpg/actors/contracts/interactable.dart';
+import 'package:flame_nano_rpg/actors/contracts/interacting.dart';
 import 'package:flame_nano_rpg/actors/contracts/living.dart';
 import 'package:flame_nano_rpg/actors/contracts/moving.dart';
-import 'package:flame_nano_rpg/actors/npc/friendly/friendly_npc_animator.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flame_nano_rpg/overlays/progress_bars/health_bar.dart';
 import 'package:flame_nano_rpg/worlds/main_world.dart';
@@ -27,6 +28,7 @@ abstract class BaseNpcComponent<State> extends PositionComponent
         Moving,
         HasStamina,
         Interactable,
+        Interacting,
         Attackable,
         Attacking,
         AttackingWithCooldown,
@@ -39,7 +41,7 @@ abstract class BaseNpcComponent<State> extends PositionComponent
     super.priority,
   });
 
-  /// Provide initialized [FriendlyNpcAnimator] for npc.
+  /// Provide initialized [DefaultNpcAnimator] for npc.
   FutureOr<SimpleCharacterAnimator<State>> provideAnimationGroupComponent();
 
   /// Provides [NpcAnimatorCallbacks].
@@ -51,16 +53,16 @@ abstract class BaseNpcComponent<State> extends PositionComponent
   State? provideStateUpdate(double dt);
 
   /// Returns a list of [BaseNpcComponent] targets to interact with
-  List<BaseNpcComponent<Object>> filterTargets(List<BaseNpcComponent<Object>> foundTargets);
+  List<Interactable> filterTargets(List<Interactable> foundTargets);
 
   /// Hitbox [Vector2] size for the NPC.
   Vector2 get hitboxSize;
 
   /// Visibility [int] range for NPC in pixels.
-  int get visibilityRange;
+  int get visibilityDistance;
 
   /// List of current targets available to the NPC.
-  late List<BaseNpcComponent<Object>> availableTargets = <BaseNpcComponent<Object>>[];
+  late List<Interactable> availableTargets = <Interactable>[];
 
   /// Assigned animator
   late final SimpleCharacterAnimator<State> animator;
@@ -111,7 +113,7 @@ abstract class BaseNpcComponent<State> extends PositionComponent
         handleWalkPoint(
           dt,
           walkPoint: walkPoint!,
-          endDistance: attackRange,
+          endDistance: attackDistance,
         );
       }
     }
@@ -152,7 +154,7 @@ abstract class BaseNpcComponent<State> extends PositionComponent
   }
 
   @override
-  void handleInteractions(List<BaseNpcComponent<Object>> targets) {
+  void handleInteractions(List<Interactable> targets) {
     // Do nothing if there are no targets
     if (availableTargets.isEmpty) return;
 
@@ -160,8 +162,12 @@ abstract class BaseNpcComponent<State> extends PositionComponent
     for (final currentTarget in availableTargets.reversed) {
       // Switch target type
       final targetPosition = currentTarget.position;
+      // Calculate interaction offset based on size
+      final distanceOffsetX = currentTarget.position.x > position.x ? size.x / 4: currentTarget.size.x / 4;
+      final distanceOffsetY = currentTarget.position.y > position.y ? size.y / 4: currentTarget.size.y / 4;
+
       // Find distance
-      final distanceToTarget = (targetPosition - position).length - (currentTarget.size / 4).length;
+      final distanceToTarget = (targetPosition - position).length - Vector2(distanceOffsetX, distanceOffsetY).length;
       // Interact with target
       final hasInteraction = interactWith(
         currentTarget,
@@ -198,7 +204,7 @@ abstract class BaseNpcComponent<State> extends PositionComponent
     // Lookup targets for npc position and remove self
     final foundTargets = world.lookupObjectsForPosition(
       position,
-      distance: visibilityRange,
+      distance: visibilityDistance,
     )..removeWhere((target) => target == this);
     // Assign filtered result to enemy targets
     availableTargets = filterTargets(foundTargets);
@@ -215,20 +221,20 @@ abstract class BaseNpcComponent<State> extends PositionComponent
     final targetPosition = target.position;
 
     // Look at enemy if within visibility range but not within move range
-    if (distance > moveDistance && distance <= visibilityRange) {
+    if (distance > moveDistance && distance <= visibilityDistance) {
       lookAtTarget(targetPosition);
       return false;
     }
     // Set walk target to the enemy if within move range but not within attack range
-    else if (distance <= moveDistance && distance > attackRange) {
+    else if (distance <= moveDistance && distance > attackDistance) {
       setWalkTarget(
         target.position,
-        endDistance: attackRange,
+        endDistance: attackDistance,
       );
       return true;
     }
     // Attack enemy if within attack range and can attack
-    else if (distance <= attackRange && canAttack) {
+    else if (distance <= attackDistance && canAttack) {
       attackTarget(
         target: target,
       );

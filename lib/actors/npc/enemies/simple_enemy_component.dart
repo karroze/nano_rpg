@@ -3,28 +3,22 @@ import 'dart:async';
 import 'package:flame/effects.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame_nano_rpg/actors/animators/npc_animator_callbacks.dart';
+import 'package:flame_nano_rpg/actors/contracts/attackable.dart';
+import 'package:flame_nano_rpg/actors/contracts/interactable.dart';
 import 'package:flame_nano_rpg/actors/npc/base_npc_component.dart';
-import 'package:flame_nano_rpg/actors/npc/enemies/enemy_state.dart';
 import 'package:flame_nano_rpg/actors/npc/friendly/friendly_warrior/friendly_warrior_component.dart';
+import 'package:flame_nano_rpg/actors/npc/friendly/npc_state.dart';
 import 'package:flame_nano_rpg/actors/objects/explosion.dart';
 import 'package:flame_nano_rpg/actors/player/player.dart';
 
-abstract class SimpleEnemyComponent extends BaseNpcComponent<EnemyState> {
-  SimpleEnemyComponent({
+abstract class SimpleNpcComponent extends BaseNpcComponent<NpcState> {
+  SimpleNpcComponent({
     required super.position,
     required super.size,
     required super.anchor,
   }) : super(
           priority: 3,
         );
-
-  Player? player;
-
-  @override
-  Vector2 get hitboxSize => Vector2(68, 64);
-
-  @override
-  int get visibilityRange => 150;
 
   @override
   FutureOr<NpcAnimatorCallbacks?> provideAnimationCallbacks() => NpcAnimatorCallbacks()
@@ -35,18 +29,18 @@ abstract class SimpleEnemyComponent extends BaseNpcComponent<EnemyState> {
     ..onDieEnded = onDieEnded;
 
   @override
-  EnemyState? provideStateUpdate(double dt) {
+  NpcState? provideStateUpdate(double dt) {
     // Set dead if not alive
     if (!isAlive) {
-      return EnemyState.die;
+      return NpcState.die;
     }
 
     // If attacked choose between hurt and dead animation based on if alive
     if (isAttacked) {
       // Get new state
       final damageState = switch (isAlive) {
-        true => EnemyState.hurt,
-        false => EnemyState.die,
+        true => NpcState.hurt,
+        false => NpcState.die,
       };
       return damageState;
     }
@@ -57,19 +51,19 @@ abstract class SimpleEnemyComponent extends BaseNpcComponent<EnemyState> {
       if (isAttackingInProgress) return null;
 
       // Return random attack state
-      return [EnemyState.attack].random();
+      return [NpcState.attack].random();
     }
 
     // Handle idle or walking
     return switch (velocity.isZero()) {
-      true => EnemyState.idle,
-      false => EnemyState.walk,
+      true => NpcState.idle,
+      false => NpcState.walk,
     };
   }
 
   @override
   bool interactWith(
-    BaseNpcComponent<Object> object, {
+    Interactable object, {
     required double distance,
   }) {
     return switch (object) {
@@ -86,9 +80,9 @@ abstract class SimpleEnemyComponent extends BaseNpcComponent<EnemyState> {
   }
 
   @override
-  List<BaseNpcComponent<Object>> filterTargets(List<BaseNpcComponent<Object>> foundTargets) {
+  List<Interactable> filterTargets(List<Interactable> foundTargets) {
     final player = foundTargets.whereType<Player>();
-    final enemies = foundTargets.whereType<FriendlyWarriorComponent>(); // TODO(georgii.savatkov): This type lookup is bad, fix later
+    final enemies = foundTargets.whereType<Attackable>(); // TODO(georgii.savatkov): This type lookup is bad, fix later
     return [
       ...player,
       ...enemies,

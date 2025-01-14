@@ -6,11 +6,12 @@ import 'package:flame/components.dart';
 import 'package:flame_nano_rpg/actors/contracts/eatable.dart';
 import 'package:flame_nano_rpg/actors/contracts/healable.dart';
 import 'package:flame_nano_rpg/actors/contracts/healer.dart';
+import 'package:flame_nano_rpg/actors/contracts/interactable.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flame_nano_rpg/objects/healing.dart';
 import 'package:meta/meta.dart';
 
-abstract class FoodComponent extends SpriteComponent with HasGameRef<NanoRpgGame>, Healer, Eatable {
+abstract class FoodComponent extends SpriteComponent with HasGameRef<NanoRpgGame>, Healer, Interactable, Eatable {
   FoodComponent({
     required super.position,
     required super.size,
@@ -28,6 +29,8 @@ abstract class FoodComponent extends SpriteComponent with HasGameRef<NanoRpgGame
 
   @override
   FutureOr<void> onLoad() async{
+    super.onLoad();
+    // Load sprite image
     sprite = Sprite(image);
 
     // Add hitbox
@@ -41,8 +44,6 @@ abstract class FoodComponent extends SpriteComponent with HasGameRef<NanoRpgGame
         anchor: Anchor.bottomCenter,
       ),
     );
-
-    return super.onLoad();
   }
 
   @override

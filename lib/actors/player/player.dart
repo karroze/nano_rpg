@@ -9,6 +9,7 @@ import 'package:flame_nano_rpg/actors/animators/npc_animator_callbacks.dart';
 import 'package:flame_nano_rpg/actors/animators/simple_character_animator.dart';
 import 'package:flame_nano_rpg/actors/contracts/eatable.dart';
 import 'package:flame_nano_rpg/actors/contracts/healable.dart';
+import 'package:flame_nano_rpg/actors/contracts/interactable.dart';
 import 'package:flame_nano_rpg/actors/npc/base_npc_component.dart';
 import 'package:flame_nano_rpg/actors/npc/enemies/simple_enemy_component.dart';
 import 'package:flame_nano_rpg/actors/objects/tree.dart';
@@ -49,7 +50,10 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
   double get moveDistance => 100;
 
   @override
-  double get attackRange => 25;
+  double get attackDistance => 25;
+
+  @override
+  double get interactionDistance => 25;
 
   @override
   List<Attack> get availableAttacks => [
@@ -69,7 +73,7 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
   Vector2 get hitboxSize => Vector2(68, 64);
 
   @override
-  int get visibilityRange => 150;
+  int get visibilityDistance => 150;
 
   final collisionDirection = Vector2.zero();
 
@@ -119,55 +123,16 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
     ..onDieEnded = onDieEnded;
 
   @override
-  List<BaseNpcComponent<Object>> filterTargets(List<BaseNpcComponent<Object>> foundTargets) {
-    return foundTargets.whereType<SimpleEnemyComponent>().toList();
+  List<Interactable> filterTargets(List<Interactable> foundTargets) {
+    // return foundTargets.whereType<SimpleNpcComponent>().toList();
+    return foundTargets;
   }
 
   @override
   FutureOr<void> setupUi() {
     super.setupUi();
+    // Remove health bar from player
     healthBar.removeFromParent();
-  }
-
-  @override
-  void onCollisionStart(Set<Vector2> intersectionPoints, PositionComponent other) {
-    super.onCollisionStart(intersectionPoints, other);
-    if (other is Eatable) {
-      final wasEaten = (other as Eatable).eatBy(this);
-      if (wasEaten) {
-        add(
-          ScaleEffect.by(
-            Vector2.all(1.2),
-            EffectController(
-              alternate: true,
-              duration: 0.125,
-              repeatCount: 2,
-            ),
-          ),
-        );
-      }
-    }
-  }
-
-  @override
-  void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
-    super.onCollision(intersectionPoints, other);
-
-    if (other is Tree) {
-      final targetDirection = other.position - position;
-      collisionDirection.setValues(
-        targetDirection.x == 0 ? 0 : targetDirection.x / targetDirection.x.abs(),
-        targetDirection.y == 0 ? 0 : targetDirection.y / targetDirection.y.abs(),
-      );
-    }
-  }
-
-  @override
-  void onCollisionEnd(PositionComponent other) {
-    super.onCollisionEnd(other);
-    if (other is Tree) {
-      collisionDirection.setValues(0, 0);
-    }
   }
 
   /// Handles what animation to play.
@@ -207,13 +172,17 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
 
   @override
   bool interactWith(
-    BaseNpcComponent<Object> object, {
+    Interactable object, {
     required double distance,
   }) {
     return switch (object) {
-      final SimpleEnemyComponent enemy => handleEnemy(
+      final SimpleNpcComponent enemy => handleEnemy(
           enemy,
           distance: distance,
+        ),
+      final Eatable eatable => handleEatable(
+          eatable,
+          distance,
         ),
       _ => false,
     };
@@ -225,7 +194,7 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
     required double distance,
   }) {
     // Get its position
-    if (distance <= attackRange && canAttack && isAttacking && !isAttackingInProgress) {
+    if (distance <= attackDistance && canAttack && isAttacking && !isAttackingInProgress) {
       attackTarget(
         target: target,
       );
@@ -233,6 +202,35 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
     }
 
     return false;
+  }
+
+  /// Handles interaction with [eatable] at given [distance].
+  bool handleEatable(
+    Eatable eatable,
+    double distance,
+  ) {
+    // Check that within interaction distance
+    if (distance > interactionDistance) return false;
+
+    // Try to eat item
+    final wasEaten = eatable.eatBy(this);
+    // Apply effects if so
+    // TODO(georgii.savatkov): Maybe move to animation callbacks?
+    if (wasEaten) {
+      add(
+        ScaleEffect.by(
+          Vector2.all(1.2),
+          EffectController(
+            alternate: true,
+            duration: 0.125,
+            repeatCount: 2,
+          ),
+        ),
+      );
+    }
+
+    // Return whether interaction was made
+    return wasEaten;
   }
 
   @override

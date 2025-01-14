@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 
 abstract mixin class Attacking {
   // TODO(georgii.savatkov): Remove
-  double get attackRange;
+  double get attackDistance;
 
   /// List of attacks available.
   List<Attack> get availableAttacks;

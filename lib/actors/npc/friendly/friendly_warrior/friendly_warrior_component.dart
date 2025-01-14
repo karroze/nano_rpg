@@ -5,6 +5,8 @@ import 'package:flame/effects.dart';
 import 'package:flame/extensions.dart';
 import 'package:flame_nano_rpg/actors/animators/npc_animator_callbacks.dart';
 import 'package:flame_nano_rpg/actors/animators/simple_character_animator.dart';
+import 'package:flame_nano_rpg/actors/contracts/attackable.dart';
+import 'package:flame_nano_rpg/actors/contracts/interactable.dart';
 import 'package:flame_nano_rpg/actors/npc/base_npc_component.dart';
 import 'package:flame_nano_rpg/actors/npc/enemies/simple_enemy_component.dart';
 import 'package:flame_nano_rpg/actors/npc/friendly/friendly_warrior/friendly_warrior_animator.dart';
@@ -41,14 +43,21 @@ final class FriendlyWarriorComponent extends BaseNpcComponent<NpcState> {
   @override
   double get moveSpeed => 50;
 
+  // --- Distances ---
+
   @override
   double get moveDistance => 100;
 
   @override
-  int get visibilityRange => 150;
+  int get visibilityDistance => 150;
 
   @override
-  double get attackRange => 25;
+  double get attackDistance => 25;
+  
+  @override
+  double get interactionDistance => 25;
+
+  // --- End Distances ---
 
   @override
   double get damageCooldownTimeframeSeconds => 2;
@@ -120,12 +129,12 @@ final class FriendlyWarriorComponent extends BaseNpcComponent<NpcState> {
 
   @override
   bool interactWith(
-    BaseNpcComponent<Object> object, {
+    Interactable object, {
     required double distance,
   }) {
     return switch (object) {
       final Player player => _handlePlayerInteraction(player),
-      final SimpleEnemyComponent enemy => handleEnemy(
+      final SimpleNpcComponent enemy => handleEnemy(
           enemy,
           distance: distance,
         ),
@@ -134,9 +143,9 @@ final class FriendlyWarriorComponent extends BaseNpcComponent<NpcState> {
   }
 
   @override
-  List<BaseNpcComponent<Object>> filterTargets(List<BaseNpcComponent<Object>> foundTargets) {
+  List<Interactable> filterTargets(List<Interactable> foundTargets) {
     final player = foundTargets.whereType<Player>().toList();
-    final enemies = foundTargets.whereType<SimpleEnemyComponent>().toList(); // TODO(georgii.savatkov): This type lookup is bad, fix later
+    final enemies = foundTargets.whereType<Attackable>().toList(); // TODO(georgii.savatkov): This type lookup is bad, fix later
     return [
       ...player,
       ...enemies,
@@ -159,10 +168,10 @@ final class FriendlyWarriorComponent extends BaseNpcComponent<NpcState> {
     final distanceToPlayer = (playerPosition - position).length - (player.size / 4).length;
 
     // Go to player if within move distance
-    if (distanceToPlayer <= moveDistance && distanceToPlayer > attackRange) {
+    if (distanceToPlayer <= moveDistance && distanceToPlayer > attackDistance) {
       setWalkTarget(
         player.position,
-        endDistance: attackRange,
+        endDistance: attackDistance,
       );
       return true;
     }

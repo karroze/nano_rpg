@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:flame/components.dart';
+import 'package:flame_nano_rpg/actors/contracts/interactable.dart';
 import 'package:flame_nano_rpg/actors/npc/base_npc_component.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flame_nano_rpg/overlays/hud.dart';
+import 'package:flame_nano_rpg/workers/base_map_resolver.dart';
 import 'package:flame_nano_rpg/workers/default_map_spawner.dart';
 import 'package:flame_nano_rpg/workers/map_resolver.dart';
 import 'package:flame_nano_rpg/workers/map_spawn_request.dart';
@@ -56,7 +58,7 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
     );
 
     // Initialize map resolver and add it
-    mapResolver = MapResolver(
+    mapResolver = DefaultMapResolver(
       mapSize: _mapSize,
       spawner: mapSpawner,
     );
@@ -87,8 +89,8 @@ final class MainWorld extends World with HasGameRef<NanoRpgGame> {
     game.gameReset = false;
   }
 
-  /// Lookup for [BaseNpcComponent] objects within [distance] at given [position] on the screen.
-  List<BaseNpcComponent<Object>> lookupObjectsForPosition(
+  /// Lookup for [Interactable] objects within [distance] at given [position] on the screen.
+  List<Interactable> lookupObjectsForPosition(
     Vector2 position, {
     required int distance,
   }) {
