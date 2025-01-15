@@ -251,6 +251,7 @@ abstract class BaseNpcComponent<State> extends PositionComponent
   /// Animation callback when idle animation has started.
   FutureOr<void> onIdleStarted() {
     isAttacked = false;
+    isAttackingInProgress = false;
   }
 
   /// Animation callback when idle animation has ended.

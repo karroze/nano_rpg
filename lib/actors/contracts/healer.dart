@@ -1,7 +1,8 @@
 import 'package:flame_nano_rpg/actors/contracts/healable.dart';
+import 'package:flame_nano_rpg/actors/contracts/interacting.dart';
 import 'package:flame_nano_rpg/objects/healing.dart';
 
-abstract mixin class Healer {
+mixin Healer on Interacting {
   bool heal({
     required Healable target,
   }) {

@@ -25,7 +25,7 @@ final class NpcToPlayerInteractionHandler extends InteractionHandler {
     final targetPosition = player.position;
 
     // Don't attack same fraction
-    if(attacker.fraction == player.fraction) return false;
+    final sameFraction = attacker.fraction == player.fraction;
 
     // Look at enemy if within visibility range but not within move range
     final playerWithinVisibilityRange = payload.distance > attacker.moveDistance && payload.distance <= attacker.visibilityDistance;
@@ -36,7 +36,7 @@ final class NpcToPlayerInteractionHandler extends InteractionHandler {
 
     // Set walk target to the enemy if within move range but not within attack range
     final playerWithinWalkRange = payload.distance <= attacker.moveDistance && payload.distance > attacker.attackDistance;
-    if (playerWithinWalkRange) {
+    if (playerWithinWalkRange && sameFraction) {
       attacker.setWalkTarget(
         targetPosition,
         endDistance: attacker.attackDistance,
@@ -45,7 +45,7 @@ final class NpcToPlayerInteractionHandler extends InteractionHandler {
     }
     // Attack enemy if within attack range and can attack
     final playerWithinAttackRange = payload.distance <= attacker.attackDistance && attacker.canAttack && attacker.hasStaminaForAttack;
-    if (playerWithinAttackRange) {
+    if (playerWithinAttackRange && !sameFraction) {
       attacker.attackTarget(
         target: player,
       );

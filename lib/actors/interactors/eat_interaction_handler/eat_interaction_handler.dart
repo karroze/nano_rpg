@@ -19,6 +19,8 @@ final class EatInteractionHandler extends InteractionHandler {
   bool performInteraction() {
     // Check that within interaction distance
     if (payload.distance > eatable.interactionDistance) return false;
+    // Proceed only when target is interacting
+    if (!target.isInteracting) return false;
     // Return if sender was eaten by target
     final wasEaten = eatable.eatBy(target);
     // If eatable was eaten, call corresponding callback

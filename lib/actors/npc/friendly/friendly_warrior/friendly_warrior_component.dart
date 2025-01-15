@@ -6,6 +6,7 @@ import 'package:flame/extensions.dart';
 import 'package:flame_nano_rpg/actors/animators/npc_animator_callbacks.dart';
 import 'package:flame_nano_rpg/actors/animators/simple_character_animator.dart';
 import 'package:flame_nano_rpg/actors/contracts/attackable.dart';
+import 'package:flame_nano_rpg/actors/contracts/healable.dart';
 import 'package:flame_nano_rpg/actors/contracts/interactable.dart';
 import 'package:flame_nano_rpg/actors/interactors/interaction_handler.dart';
 import 'package:flame_nano_rpg/actors/interactors/interaction_payload.dart';
@@ -19,7 +20,7 @@ import 'package:flame_nano_rpg/actors/player/player.dart';
 import 'package:flame_nano_rpg/objects/attack.dart';
 import 'package:flame_nano_rpg/objects/fraction.dart';
 
-final class FriendlyWarriorComponent extends SimpleNpcComponent {
+final class FriendlyWarriorComponent extends SimpleNpcComponent with Healable {
   FriendlyWarriorComponent({
     required super.position,
   }) : super(
@@ -91,17 +92,6 @@ final class FriendlyWarriorComponent extends SimpleNpcComponent {
         size: size,
         anchor: Anchor.center,
       );
-
-  @override
-  FutureOr<NpcAnimatorCallbacks?> provideAnimationCallbacks() => NpcAnimatorCallbacks()
-    ..onIdleStarted = onIdleStarted
-    ..onIdleEnded = onIdleStarted
-    ..onAttackStarted = onAttackStarted
-    ..onAttackEnded = onAttackEnded
-    ..onHurtStarted = onHurtStarted
-    ..onHurtEnded = onHurtEnded
-    ..onDieEnded = onDieEnded;
-
 
   @override
   FutureOr<void> onDieEnded() async {

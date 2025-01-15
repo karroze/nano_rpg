@@ -25,11 +25,14 @@ abstract class SimpleNpcComponent extends BaseNpcComponent<NpcState> {
 
   @override
   FutureOr<NpcAnimatorCallbacks?> provideAnimationCallbacks() => NpcAnimatorCallbacks()
+    ..onIdleStarted = onIdleStarted
+    ..onIdleEnded = onIdleStarted
     ..onAttackStarted = onAttackStarted
     ..onAttackEnded = onAttackEnded
     ..onHurtStarted = onHurtStarted
     ..onHurtEnded = onHurtEnded
     ..onDieEnded = onDieEnded;
+
 
   @override
   InteractionHandler? provideInteraction(

@@ -10,9 +10,11 @@ import 'package:flame_nano_rpg/actors/animators/simple_character_animator.dart';
 import 'package:flame_nano_rpg/actors/contracts/attackable.dart';
 import 'package:flame_nano_rpg/actors/contracts/eatable.dart';
 import 'package:flame_nano_rpg/actors/contracts/healable.dart';
+import 'package:flame_nano_rpg/actors/contracts/healer.dart';
 import 'package:flame_nano_rpg/actors/contracts/interactable.dart';
 import 'package:flame_nano_rpg/actors/interactors/eat_interaction_handler/eat_interaction_handler.dart';
 import 'package:flame_nano_rpg/actors/interactors/eat_interaction_handler/eat_interaction_handler_callbacks.dart';
+import 'package:flame_nano_rpg/actors/interactors/heal_interaction_handler/heal_interaction_handler.dart';
 import 'package:flame_nano_rpg/actors/interactors/interaction_handler.dart';
 import 'package:flame_nano_rpg/actors/interactors/interaction_payload.dart';
 import 'package:flame_nano_rpg/actors/interactors/player_attack_interaction_handler/player_attack_interaction_handler.dart';
@@ -22,9 +24,10 @@ import 'package:flame_nano_rpg/actors/player/player_animator.dart';
 import 'package:flame_nano_rpg/actors/player/player_state.dart';
 import 'package:flame_nano_rpg/objects/attack.dart';
 import 'package:flame_nano_rpg/objects/fraction.dart';
+import 'package:flame_nano_rpg/objects/healing.dart';
 import 'package:flutter/services.dart';
 
-final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, CollisionCallbacks, Healable {
+final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, CollisionCallbacks, Healable, Healer {
   Player({
     required super.position,
   }) : super(
@@ -73,6 +76,11 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
       ];
 
   @override
+  Healing produceHealing() => const Healing(
+        amount: 100,
+      );
+
+  @override
   double get damageCooldownTimeframeSeconds => 0;
 
   @override
@@ -95,7 +103,10 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
       );
 
   @override
+  @override
   FutureOr<NpcAnimatorCallbacks?> provideAnimationCallbacks() => NpcAnimatorCallbacks()
+    ..onIdleStarted = onIdleStarted
+    ..onIdleEnded = onIdleStarted
     ..onAttackStarted = onAttackStarted
     ..onAttackEnded = onAttackEnded
     ..onHurtStarted = onHurtStarted
@@ -126,7 +137,7 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
 
     final handledMovement = _handleMovement(keysPressed);
     // final handledCollision = _handleCollisionDirection();
-    final handledAttacking = _handleAttacking(key);
+    final handledAttacking = _handleInteractionButtonPressed(key);
 
     final handled = handledMovement || handledAttacking;
 
@@ -184,6 +195,11 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
     required InteractionPayload payload,
   }) {
     return switch (other) {
+      final Healable attackable => HealInteractionHandler(
+        healer: this,
+        target: attackable,
+        payload: payload,
+      ),
       final Attackable attackable => PlayerAttackInteractionHandler(
           player: this,
           target: attackable,
@@ -203,53 +219,45 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
   /// Returns true if movement was handled.
   bool _handleMovement(Set<LogicalKeyboardKey> keysPressed) {
     // Check for X movement
-    final diffX = switch (keysPressed) {
+    final velocityX = switch (keysPressed) {
       final Set<LogicalKeyboardKey> keys when keys.contains(LogicalKeyboardKey.keyA) || keys.contains(LogicalKeyboardKey.arrowLeft) => -1.0,
       final Set<LogicalKeyboardKey> keys when keys.contains(LogicalKeyboardKey.keyD) || keys.contains(LogicalKeyboardKey.arrowRight) => 1.0,
       _ => 0.0,
     };
 
     // Check for Y movement
-    final diffY = switch (keysPressed) {
+    final velocityY = switch (keysPressed) {
       final Set<LogicalKeyboardKey> keys when keys.contains(LogicalKeyboardKey.keyW) || keys.contains(LogicalKeyboardKey.arrowUp) => -1.0,
       final Set<LogicalKeyboardKey> keys when keys.contains(LogicalKeyboardKey.keyS) || keys.contains(LogicalKeyboardKey.arrowDown) => 1.0,
       _ => 0.0,
     };
 
     velocity.setValues(
-      diffX,
-      diffY,
+      velocityX,
+      velocityY,
     );
     return true;
   }
 
   /// Handles attacking
-  bool _handleAttacking(LogicalKeyboardKey key) {
-    // Set velocity to zero if there is a pending attack
-    if (isAttacking) {
-      velocity.setValues(0, 0);
-      return false;
-    }
-
+  bool _handleInteractionButtonPressed(LogicalKeyboardKey key) {
     // Check if attack button was pressed
-    isAttacking = key == LogicalKeyboardKey.keyE;
-    if (isAttacking) {
-      // If not, set attacking to false and do nothing
-      if (!hasStaminaForAttack) {
-        isAttacking = false;
-        isAttackingInProgress = false;
-        return false;
-      }
-
-      // Set movement to zero
-      velocity.setValues(0, 0);
-
-      // Manually decrease stamina even if no enemy targets were hit
-      decreaseStaminaPerHit();
-
-      return true;
+    final shouldAttack = key == LogicalKeyboardKey.keyE;
+    final shouldInteract = key == LogicalKeyboardKey.keyF;
+    // Set flags if attacking
+    if (shouldAttack) {
+      isAttacking = true;
+      isInteracting = true;
+    } else {
+      isInteracting = false;
     }
-    return false;
+    // Set flags if is interacting
+    if (shouldInteract) {
+      isInteracting = true;
+    } else {
+      isInteracting = false;
+    }
+    return shouldAttack || shouldInteract;
   }
 
   /// Updates player position with an update [dt] time.

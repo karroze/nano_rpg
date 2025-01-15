@@ -18,11 +18,17 @@ final class PlayerAttackInteractionHandler extends InteractionHandler {
   @override
   bool performInteraction() {
     // Don't attack same fraction
-    if(player.fraction == target.fraction) return false;
+    if (player.fraction == target.fraction) return false;
     // Check that attack can be performed
     final canAttack = payload.distance <= player.attackDistance && player.hasStaminaForAttack && player.canAttack;
     // Attack target if possible
-    if (canAttack && player.isAttacking) {
+    if (canAttack && player.isAttacking && !player.isAttackingInProgress) {
+      // Set player velocity to zero
+      player.velocity.setValues(
+        0,
+        0,
+      );
+      // Attack target
       player.attackTarget(
         target: target,
       );

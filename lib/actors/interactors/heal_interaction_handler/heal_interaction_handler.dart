@@ -14,6 +14,9 @@ final class HealInteractionHandler extends InteractionHandler {
 
   @override
   bool performInteraction() {
+    // Check that there is an interaction
+    if (!healer.isInteracting) return false;
+    // Receive healing by target
     target.receiveHealing(
       healing: healer.produceHealing(),
       healer: healer,

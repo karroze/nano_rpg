@@ -7,11 +7,12 @@ import 'package:flame_nano_rpg/actors/contracts/eatable.dart';
 import 'package:flame_nano_rpg/actors/contracts/healable.dart';
 import 'package:flame_nano_rpg/actors/contracts/healer.dart';
 import 'package:flame_nano_rpg/actors/contracts/interactable.dart';
+import 'package:flame_nano_rpg/actors/contracts/interacting.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flame_nano_rpg/objects/healing.dart';
 import 'package:meta/meta.dart';
 
-abstract class FoodComponent extends SpriteComponent with HasGameRef<NanoRpgGame>, Healer, Interactable, Eatable {
+abstract class FoodComponent extends SpriteComponent with HasGameRef<NanoRpgGame>, Interacting, Healer, Interactable, Eatable {
   FoodComponent({
     required super.position,
     required super.size,
