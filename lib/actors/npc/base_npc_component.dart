@@ -15,6 +15,7 @@ import 'package:flame_nano_rpg/actors/contracts/interactable.dart';
 import 'package:flame_nano_rpg/actors/contracts/interacting.dart';
 import 'package:flame_nano_rpg/actors/contracts/living.dart';
 import 'package:flame_nano_rpg/actors/contracts/moving.dart';
+import 'package:flame_nano_rpg/actors/interactors/interaction_payload.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flame_nano_rpg/overlays/progress_bars/health_bar.dart';
 import 'package:flame_nano_rpg/worlds/main_world.dart';
@@ -153,7 +154,6 @@ abstract class BaseNpcComponent<State> extends PositionComponent
     );
   }
 
-  @override
   void handleInteractions(List<Interactable> targets) {
     // Do nothing if there are no targets
     if (availableTargets.isEmpty) return;
@@ -169,17 +169,13 @@ abstract class BaseNpcComponent<State> extends PositionComponent
       // Find distance
       final distanceToTarget = (targetPosition - position).length - Vector2(distanceOffsetX, distanceOffsetY).length;
       // Interact with target
-      final hasInteraction = interactWith(
-        currentTarget,
-        distance: distanceToTarget,
-      );
-
-      provideInteraction(
-        currentTarget,
-        payload: InteractionPayload(
-          distance: distanceToTarget,
-        ),
-      );
+      final hasInteraction = provideInteraction(
+            currentTarget,
+            payload: InteractionPayload(
+              distance: distanceToTarget,
+            ),
+          )?.performInteraction() ??
+          false;
 
       // Return from iteration over enemies if interaction happened
       if (hasInteraction) return;

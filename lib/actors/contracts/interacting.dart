@@ -1,14 +1,11 @@
 import 'package:flame_nano_rpg/actors/contracts/interactable.dart';
+import 'package:flame_nano_rpg/actors/interactors/interaction_handler.dart';
+import 'package:flame_nano_rpg/actors/interactors/interaction_payload.dart';
 
 mixin Interacting {
-  /// Handle NPC interactions with other objects.
-  void handleInteractions(List<Interactable> targets);
-
-  /// Method to interact with this.
-  ///
-  /// Returns true if interaction should happen.
-  bool interactWith(
-    Interactable object, {
-    required double distance,
+  /// Provides interaction between [Interacting] and [Interactable].
+  InteractionHandler? provideInteraction(
+    Interactable other, {
+    required InteractionPayload payload,
   });
 }

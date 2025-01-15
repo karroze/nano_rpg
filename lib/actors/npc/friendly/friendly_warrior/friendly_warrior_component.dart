@@ -7,14 +7,18 @@ import 'package:flame_nano_rpg/actors/animators/npc_animator_callbacks.dart';
 import 'package:flame_nano_rpg/actors/animators/simple_character_animator.dart';
 import 'package:flame_nano_rpg/actors/contracts/attackable.dart';
 import 'package:flame_nano_rpg/actors/contracts/interactable.dart';
+import 'package:flame_nano_rpg/actors/interactors/interaction_handler.dart';
+import 'package:flame_nano_rpg/actors/interactors/interaction_payload.dart';
+import 'package:flame_nano_rpg/actors/interactors/npc_to_npc_interaction_handler/npc_to_npc_interaction_handler.dart';
+import 'package:flame_nano_rpg/actors/interactors/npc_to_player_interaction_handler/npc_to_player_interaction_handler.dart';
 import 'package:flame_nano_rpg/actors/npc/base_npc_component.dart';
-import 'package:flame_nano_rpg/actors/npc/enemies/simple_enemy_component.dart';
+import 'package:flame_nano_rpg/actors/npc/simple_npc_component.dart';
 import 'package:flame_nano_rpg/actors/npc/friendly/friendly_warrior/friendly_warrior_animator.dart';
 import 'package:flame_nano_rpg/actors/npc/friendly/npc_state.dart';
 import 'package:flame_nano_rpg/actors/player/player.dart';
 import 'package:flame_nano_rpg/objects/attack.dart';
 
-final class FriendlyWarriorComponent extends BaseNpcComponent<NpcState> {
+final class FriendlyWarriorComponent extends SimpleNpcComponent {
   FriendlyWarriorComponent({
     required super.position,
   }) : super(
@@ -94,97 +98,6 @@ final class FriendlyWarriorComponent extends BaseNpcComponent<NpcState> {
     ..onHurtEnded = onHurtEnded
     ..onDieEnded = onDieEnded;
 
-  @override
-  InteractionHandler? provideInteraction(
-    Interactable other, {
-    required InteractionPayload payload,
-  }) =>
-      null;
-
-  @override
-  NpcState? provideStateUpdate(double dt) {
-    // Set dead if not alive
-    if (!isAlive) {
-      return NpcState.die;
-    }
-
-    // If attacked choose between hurt and dead animation based on if alive
-    if (isAttacked) {
-      // Get new state
-      final damageState = switch (isAlive) {
-        true => NpcState.hurt,
-        false => NpcState.die,
-      };
-      return damageState;
-    }
-
-    // If attacking
-    if (isAttacking) {
-      // If there is an attacking in progress, do nothing
-      if (isAttackingInProgress) return null;
-
-      // Return random attack state
-      return [NpcState.attack].random();
-    }
-
-    // Handle idle or walking
-    return switch (velocity.isZero()) {
-      true => NpcState.idle,
-      false => NpcState.walk,
-    };
-  }
-
-  @override
-  bool interactWith(
-    Interactable object, {
-    required double distance,
-  }) {
-    return switch (object) {
-      final Player player => _handlePlayerInteraction(player),
-      final SimpleNpcComponent enemy => handleEnemy(
-          enemy,
-          distance: distance,
-        ),
-      _ => false,
-    };
-  }
-
-  @override
-  List<Interactable> filterTargets(List<Interactable> foundTargets) {
-    final player = foundTargets.whereType<Player>().toList();
-    final enemies = foundTargets.whereType<Attackable>().toList(); // TODO(georgii.savatkov): This type lookup is bad, fix later
-    return [
-      ...player,
-      ...enemies,
-    ];
-  }
-
-  /// Handles interaction with a [player].
-  bool _handlePlayerInteraction(Player player) {
-    // // Check if player has enemies
-    // if (player!.enemyTargets.isNotEmpty) {
-    //   // Get last
-    //   final playerEnemy = player!.enemyTargets.last;
-    //   // Handle enemy interaction
-    //   _handleEnemyInteraction(playerEnemy);
-    //   return;
-    // }
-    // Get its position
-    final playerPosition = player.position;
-    // Find distance
-    final distanceToPlayer = (playerPosition - position).length - (player.size / 4).length;
-
-    // Go to player if within move distance
-    if (distanceToPlayer <= moveDistance && distanceToPlayer > attackDistance) {
-      setWalkTarget(
-        player.position,
-        endDistance: attackDistance,
-      );
-      return true;
-    }
-
-    return false;
-  }
 
   @override
   FutureOr<void> onDieEnded() async {

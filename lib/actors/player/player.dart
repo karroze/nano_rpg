@@ -7,11 +7,17 @@ import 'package:flame/extensions.dart';
 import 'package:flame/rendering.dart';
 import 'package:flame_nano_rpg/actors/animators/npc_animator_callbacks.dart';
 import 'package:flame_nano_rpg/actors/animators/simple_character_animator.dart';
+import 'package:flame_nano_rpg/actors/contracts/attackable.dart';
 import 'package:flame_nano_rpg/actors/contracts/eatable.dart';
 import 'package:flame_nano_rpg/actors/contracts/healable.dart';
 import 'package:flame_nano_rpg/actors/contracts/interactable.dart';
+import 'package:flame_nano_rpg/actors/interactors/eat_interaction_handler/eat_interaction_handler.dart';
+import 'package:flame_nano_rpg/actors/interactors/eat_interaction_handler/eat_interaction_handler_callbacks.dart';
+import 'package:flame_nano_rpg/actors/interactors/interaction_handler.dart';
+import 'package:flame_nano_rpg/actors/interactors/interaction_payload.dart';
+import 'package:flame_nano_rpg/actors/interactors/player_attack_interaction_handler/player_attack_interaction_handler.dart';
 import 'package:flame_nano_rpg/actors/npc/base_npc_component.dart';
-import 'package:flame_nano_rpg/actors/npc/enemies/simple_enemy_component.dart';
+import 'package:flame_nano_rpg/actors/npc/simple_npc_component.dart';
 import 'package:flame_nano_rpg/actors/player/player_animator.dart';
 import 'package:flame_nano_rpg/actors/player/player_state.dart';
 import 'package:flame_nano_rpg/objects/attack.dart';
@@ -74,7 +80,32 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
   @override
   int get visibilityDistance => 150;
 
-  final collisionDirection = Vector2.zero();
+  /// [Vector2] to store last collision direction.
+  late final collisionDirection = Vector2.zero();
+
+  /// Callbacks for [EatInteractionHandler].
+  late final eatInteractionHandlerCallbacks = EatInteractionHandlerCallbacks()..onEatableConsumed = _onEatableConsumed;
+
+  @override
+  FutureOr<SimpleCharacterAnimator<PlayerState>> provideAnimationGroupComponent() => PlayerAnimator(
+        position: size / 2,
+        size: size,
+        anchor: Anchor.center,
+      );
+
+  @override
+  FutureOr<NpcAnimatorCallbacks?> provideAnimationCallbacks() => NpcAnimatorCallbacks()
+    ..onAttackStarted = onAttackStarted
+    ..onAttackEnded = onAttackEnded
+    ..onHurtStarted = onHurtStarted
+    ..onHurtEnded = onHurtEnded
+    ..onDieEnded = onDieEnded;
+
+  @override
+  List<Interactable> filterTargets(List<Interactable> foundTargets) {
+    // return foundTargets.whereType<SimpleNpcComponent>().toList();
+    return foundTargets;
+  }
 
   @override
   void update(double dt) {
@@ -104,27 +135,6 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
     if (!handled) return false;
 
     return true;
-  }
-
-  @override
-  FutureOr<SimpleCharacterAnimator<PlayerState>> provideAnimationGroupComponent() => PlayerAnimator(
-        position: size / 2,
-        size: size,
-        anchor: Anchor.center,
-      );
-
-  @override
-  FutureOr<NpcAnimatorCallbacks?> provideAnimationCallbacks() => NpcAnimatorCallbacks()
-    ..onAttackStarted = onAttackStarted
-    ..onAttackEnded = onAttackEnded
-    ..onHurtStarted = onHurtStarted
-    ..onHurtEnded = onHurtEnded
-    ..onDieEnded = onDieEnded;
-
-  @override
-  List<Interactable> filterTargets(List<Interactable> foundTargets) {
-    // return foundTargets.whereType<SimpleNpcComponent>().toList();
-    return foundTargets;
   }
 
   @override
@@ -179,10 +189,6 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
           enemy,
           distance: distance,
         ),
-      // final Eatable eatable => handleEatable(
-      //     eatable,
-      //     distance,
-      //   ),
       _ => false,
     };
   }
@@ -193,11 +199,16 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
     required InteractionPayload payload,
   }) {
     return switch (other) {
-      final Eatable eatable => HealInteractionHandler(
+      final Attackable attackable => PlayerAttackInteractionHandler(
+          attacker: this,
+          target: attackable,
+          payload: payload,
+        ),
+      final Eatable eatable => EatInteractionHandler(
           eatable: eatable,
           target: this,
           payload: payload,
-        ),
+        )..callbacks = eatInteractionHandlerCallbacks,
       _ => null,
     };
   }
@@ -207,60 +218,15 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
     BaseNpcComponent<Object> target, {
     required double distance,
   }) {
-    // Get its position
-    if (distance <= attackDistance && canAttack && isAttacking && !isAttackingInProgress) {
-      attackTarget(
-        target: target,
-      );
-      return true;
-    }
-
+    // // Get its position
+    // if (distance <= attackDistance && canAttack && isAttacking && !isAttackingInProgress) {
+    //   attackTarget(
+    //     target: target,
+    //   );
+    //   return true;
+    // }
+    //
     return false;
-  }
-
-  /// Handles interaction with [eatable] at given [distance].
-  bool handleEatable(
-    Eatable eatable,
-    double distance,
-  ) {
-    // Check that within interaction distance
-    if (distance > eatable.interactionDistance) return false;
-
-    // Try to eat item
-    final wasEaten = eatable.eatBy(this);
-    // Apply effects if so
-    // TODO(georgii.savatkov): Maybe move to animation callbacks?
-    if (wasEaten) {
-      add(
-        ScaleEffect.by(
-          Vector2.all(1.2),
-          EffectController(
-            alternate: true,
-            duration: 0.125,
-            repeatCount: 2,
-          ),
-        ),
-      );
-    }
-
-    // Return whether interaction was made
-    return wasEaten;
-  }
-
-  @override
-  FutureOr<void> onDieEnded() async {
-    // Wait for some time
-    await Future<void>.delayed(
-      const Duration(
-        milliseconds: 1250,
-      ),
-    );
-    // Apply grayscale decorator
-    animator.decorator.addLast(
-      PaintDecorator.grayscale(
-        opacity: 0.5,
-      ),
-    );
   }
 
   /// Handles movement by processing keyboard [keysPressed]-s.
@@ -340,5 +306,40 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
     if (goesLeftLooksRight || goesRightLooksLeft) {
       animator.flipHorizontally();
     }
+  }
+
+  @override
+  FutureOr<void> onDieEnded() async {
+    // Wait for some time
+    await Future<void>.delayed(
+      const Duration(
+        milliseconds: 1250,
+      ),
+    );
+    // Apply grayscale decorator
+    animator.decorator.addLast(
+      PaintDecorator.grayscale(
+        opacity: 0.5,
+      ),
+    );
+  }
+
+  /// Handles successful eatable consumption.
+  FutureOr<void> _onEatableConsumed(Eatable eatable) async {
+    // Add scale effect to player's animator
+    await animator.add(
+      ScaleEffect.by(
+        Vector2.all(1.2),
+        EffectController(
+          alternate: true,
+          duration: 0.125,
+          repeatCount: 2,
+        ),
+      ),
+    );
+    // Remove eatable from the map
+    world.mapResolver.removeObjectFromMap(eatable);
+    // Remove eatable
+    eatable.removeFromParent();
   }
 }

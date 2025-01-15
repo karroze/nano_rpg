@@ -52,7 +52,7 @@ final class DefaultMapResolver extends MapResolver {
   FutureOr<void> loadCustomObjects() async {
     // Get custom object requests
     final customObjects = await spawner.spawnCustomObjects(mapSize);
-    // Iterate over tem
+    // Iterate over them
     for (final objectRequest in customObjects) {
       // Add object to map
       await addObjectToMap(
