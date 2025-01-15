@@ -31,6 +31,9 @@ final class NpcToNpcInteractionHandler extends InteractionHandler {
       return false;
     }
 
+    // Don't attack same fraction
+    if(attacker.fraction == target.fraction) return false;
+
     // Set walk target to the enemy if within move range but not within attack range
     final playerWithinWalkRange = payload.distance <= attacker.moveDistance && payload.distance > attacker.attackDistance;
     if (playerWithinWalkRange) {

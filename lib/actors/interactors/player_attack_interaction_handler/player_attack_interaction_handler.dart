@@ -5,23 +5,25 @@ import 'package:flame_nano_rpg/actors/player/player.dart';
 
 final class PlayerAttackInteractionHandler extends InteractionHandler {
   PlayerAttackInteractionHandler({
-    required this.attacker,
+    required this.player,
     required this.target,
     required super.payload,
     this.callbacks,
   });
 
-  final Player attacker;
+  final Player player;
   final Attackable target;
   EatInteractionHandlerCallbacks? callbacks;
 
   @override
   bool performInteraction() {
+    // Don't attack same fraction
+    if(player.fraction == target.fraction) return false;
     // Check that attack can be performed
-    final canAttack = payload.distance <= attacker.attackDistance && attacker.hasStaminaForAttack && attacker.canAttack;
+    final canAttack = payload.distance <= player.attackDistance && player.hasStaminaForAttack && player.canAttack;
     // Attack target if possible
-    if (canAttack && attacker.isAttacking) {
-      attacker.attackTarget(
+    if (canAttack && player.isAttacking) {
+      player.attackTarget(
         target: target,
       );
     }

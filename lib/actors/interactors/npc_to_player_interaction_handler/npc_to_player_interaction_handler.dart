@@ -24,6 +24,9 @@ final class NpcToPlayerInteractionHandler extends InteractionHandler {
     // Get target position
     final targetPosition = player.position;
 
+    // Don't attack same fraction
+    if(attacker.fraction == player.fraction) return false;
+
     // Look at enemy if within visibility range but not within move range
     final playerWithinVisibilityRange = payload.distance > attacker.moveDistance && payload.distance <= attacker.visibilityDistance;
     if (playerWithinVisibilityRange) {

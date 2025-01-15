@@ -21,6 +21,7 @@ import 'package:flame_nano_rpg/actors/npc/simple_npc_component.dart';
 import 'package:flame_nano_rpg/actors/player/player_animator.dart';
 import 'package:flame_nano_rpg/actors/player/player_state.dart';
 import 'package:flame_nano_rpg/objects/attack.dart';
+import 'package:flame_nano_rpg/objects/fraction.dart';
 import 'package:flutter/services.dart';
 
 final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, CollisionCallbacks, Healable {
@@ -102,20 +103,18 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
     ..onDieEnded = onDieEnded;
 
   @override
-  List<Interactable> filterTargets(List<Interactable> foundTargets) {
-    // return foundTargets.whereType<SimpleNpcComponent>().toList();
-    return foundTargets;
-  }
+  Fraction get fraction => Fraction.friend;
+
+  @override
+  List<Interactable> filterTargets(List<Interactable> foundTargets) => foundTargets;
 
   @override
   void update(double dt) {
+    super.update(dt);
     // Handle movement if is alive
     if (isAlive) {
       _handleUpdateMovement(dt);
     }
-
-    super.update(dt);
-    // _disposeEnemyTargets();
   }
 
   @override
@@ -180,27 +179,13 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
   }
 
   @override
-  bool interactWith(
-    Interactable object, {
-    required double distance,
-  }) {
-    return switch (object) {
-      final SimpleNpcComponent enemy => handleEnemy(
-          enemy,
-          distance: distance,
-        ),
-      _ => false,
-    };
-  }
-
-  @override
   InteractionHandler? provideInteraction(
     Interactable other, {
     required InteractionPayload payload,
   }) {
     return switch (other) {
       final Attackable attackable => PlayerAttackInteractionHandler(
-          attacker: this,
+          player: this,
           target: attackable,
           payload: payload,
         ),
@@ -211,22 +196,6 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
         )..callbacks = eatInteractionHandlerCallbacks,
       _ => null,
     };
-  }
-
-  @override
-  bool handleEnemy(
-    BaseNpcComponent<Object> target, {
-    required double distance,
-  }) {
-    // // Get its position
-    // if (distance <= attackDistance && canAttack && isAttacking && !isAttackingInProgress) {
-    //   attackTarget(
-    //     target: target,
-    //   );
-    //   return true;
-    // }
-    //
-    return false;
   }
 
   /// Handles movement by processing keyboard [keysPressed]-s.

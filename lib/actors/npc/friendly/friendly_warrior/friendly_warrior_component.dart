@@ -17,6 +17,7 @@ import 'package:flame_nano_rpg/actors/npc/friendly/friendly_warrior/friendly_war
 import 'package:flame_nano_rpg/actors/npc/friendly/npc_state.dart';
 import 'package:flame_nano_rpg/actors/player/player.dart';
 import 'package:flame_nano_rpg/objects/attack.dart';
+import 'package:flame_nano_rpg/objects/fraction.dart';
 
 final class FriendlyWarriorComponent extends SimpleNpcComponent {
   FriendlyWarriorComponent({
@@ -69,6 +70,9 @@ final class FriendlyWarriorComponent extends SimpleNpcComponent {
   // Dimensions
   @override
   Vector2 get hitboxSize => Vector2(68, 64);
+
+  @override
+  Fraction get fraction => Fraction.friend;
 
   @override
   List<Attack> get availableAttacks => [
