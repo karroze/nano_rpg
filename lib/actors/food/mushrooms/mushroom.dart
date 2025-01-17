@@ -2,7 +2,6 @@ import 'package:flame_nano_rpg/actors/contracts/interactable.dart';
 import 'package:flame_nano_rpg/actors/food/food_component.dart';
 import 'package:flame_nano_rpg/actors/interactors/interaction_handler.dart';
 import 'package:flame_nano_rpg/actors/interactors/interaction_payload.dart';
-import 'package:flame_nano_rpg/actors/player/player.dart';
 
 abstract class MushroomComponent extends FoodComponent {
   MushroomComponent({

@@ -25,9 +25,9 @@ abstract class MapResolver extends Component {
 
   /// Lookups [Interactable] objects within [distance] of given [position].
   List<Interactable> lookupObjectsForPosition(
-      MapVector position, {
-        required MapVector distance,
-      });
+    MapVector position, {
+    required MapVector distance,
+  });
 
   /// Provides logic to load custom objects to the map.
   FutureOr<void> loadCustomObjects();
@@ -93,16 +93,15 @@ abstract class MapResolver extends Component {
 
   /// Method to update [object] position on the map.
   void updateObjectFromMap(
-      PositionComponent object, {
-        required MapVector newPosition,
-      }) {
+    PositionComponent object, {
+    required MapVector newPosition,
+  }) {
     // Remove object from map
     removeObjectFromMap(object);
     // Set new position for object
     try {
       map[newPosition.x][newPosition.y] = List.of(map[newPosition.x][newPosition.y])..add(object);
-    }
-    catch(_) {}
+    } catch (_) {}
   }
 
   /// Method to removed [object] from map.
@@ -113,7 +112,7 @@ abstract class MapResolver extends Component {
     if (mapPositionForObject != null) {
       map[mapPositionForObject.x][mapPositionForObject.y] = map[mapPositionForObject.x][mapPositionForObject.y]
         ..removeWhere(
-              (item) => item == object,
+          (item) => item == object,
         );
     }
   }

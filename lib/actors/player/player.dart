@@ -19,7 +19,6 @@ import 'package:flame_nano_rpg/actors/interactors/interaction_handler.dart';
 import 'package:flame_nano_rpg/actors/interactors/interaction_payload.dart';
 import 'package:flame_nano_rpg/actors/interactors/player_attack_interaction_handler/player_attack_interaction_handler.dart';
 import 'package:flame_nano_rpg/actors/npc/base_npc_component.dart';
-import 'package:flame_nano_rpg/actors/npc/simple_npc_component.dart';
 import 'package:flame_nano_rpg/actors/player/player_animator.dart';
 import 'package:flame_nano_rpg/actors/player/player_state.dart';
 import 'package:flame_nano_rpg/objects/attack.dart';

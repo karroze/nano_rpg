@@ -10,7 +10,6 @@ import 'package:flame_nano_rpg/actors/interactors/interaction_payload.dart';
 import 'package:flame_nano_rpg/actors/interactors/npc_to_npc_interaction_handler/npc_to_npc_interaction_handler.dart';
 import 'package:flame_nano_rpg/actors/interactors/npc_to_player_interaction_handler/npc_to_player_interaction_handler.dart';
 import 'package:flame_nano_rpg/actors/npc/base_npc_component.dart';
-import 'package:flame_nano_rpg/actors/npc/friendly/friendly_warrior/friendly_warrior_component.dart';
 import 'package:flame_nano_rpg/actors/npc/friendly/npc_state.dart';
 import 'package:flame_nano_rpg/actors/objects/explosion.dart';
 import 'package:flame_nano_rpg/actors/player/player.dart';

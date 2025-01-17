@@ -1,11 +1,6 @@
-import 'package:flame_nano_rpg/actors/contracts/attackable.dart';
-import 'package:flame_nano_rpg/actors/contracts/attacking.dart';
-import 'package:flame_nano_rpg/actors/contracts/attacking_with_cooldown.dart';
-import 'package:flame_nano_rpg/actors/contracts/attacking_with_stamina.dart';
 import 'package:flame_nano_rpg/actors/interactors/eat_interaction_handler/eat_interaction_handler_callbacks.dart';
 import 'package:flame_nano_rpg/actors/interactors/interaction_handler.dart';
 import 'package:flame_nano_rpg/actors/npc/simple_npc_component.dart';
-import 'package:flame_nano_rpg/actors/player/player.dart';
 
 final class NpcToNpcInteractionHandler extends InteractionHandler {
   NpcToNpcInteractionHandler({
