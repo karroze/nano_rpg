@@ -1,16 +1,23 @@
 # flame_nano_rpg
 
-A new Flutter project.
+A simple RPG game written in Dart on Flame engine.
 
-## Getting Started
+## Intro
 
-This project is a starting point for a Flutter application.
+This project started as a way of learning Flame engine for a job interview.
+However, the process of tinkering with it gives great pleasure to me, so now I'm slowly adding new features to it.
 
-A few resources to get you started if this is your first Flutter project:
+The idea is pretty much as old as it can be. Simple RPG game with enemies, missions, looting
+and other stuff classic to this style of games.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+I'm working on this project here and there when I have some free time and doing this purely for fun.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Wishlist:
+
+* [ ] Inventory and looting system
+* [ ] Dialogs
+* [ ] Missions
+* [ ] Levels system with player progression
+* [ ] Dynamic map generation based on seed value
+* [ ] Proper pathfinding for NPC-s
+* [ ] Sound design
