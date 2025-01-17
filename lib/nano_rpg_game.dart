@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
+import 'package:flame_nano_rpg/gen/assets.gen.dart';
 import 'package:flame_nano_rpg/worlds/main_world.dart';
 
 final class NanoRpgGame extends FlameGame with HasCollisionDetection, HasKeyboardHandlerComponents {
@@ -33,45 +34,46 @@ final class NanoRpgGame extends FlameGame with HasCollisionDetection, HasKeyboar
   }
 
   FutureOr<void> _loadAssets() async {
+    images.prefix = '';
     // Load assets
     await images.loadAll(
       [
-        'explosion.png',
-        'player/warrior_1/idle.png',
-        'player/warrior_1/walk.png',
-        'player/warrior_1/attack_1.png',
-        'player/warrior_1/attack_2.png',
-        'player/warrior_1/attack_3.png',
-        'player/warrior_1/hurt.png',
-        'player/warrior_1/dead.png',
-        'player/warrior_2/idle.png',
-        'player/warrior_2/walk.png',
-        'player/warrior_2/attack_1.png',
-        'player/warrior_2/attack_2.png',
-        'player/warrior_2/hurt.png',
-        'player/warrior_2/dead.png',
-        'enemies/orc_berserk/idle.png',
-        'enemies/orc_berserk/walk.png',
-        'enemies/orc_berserk/attack_1.png',
-        'enemies/orc_berserk/dead.png',
-        'enemies/orc_berserk/hurt.png',
-        'enemies/orc_shaman/idle.png',
-        'enemies/orc_shaman/walk.png',
-        'enemies/orc_shaman/attack_1.png',
-        'enemies/orc_shaman/dead.png',
-        'enemies/orc_shaman/hurt.png',
-        'enemies/orc_warrior/idle.png',
-        'enemies/orc_warrior/walk.png',
-        'enemies/orc_warrior/attack_1.png',
-        'enemies/orc_warrior/dead.png',
-        'enemies/orc_warrior/hurt.png',
-        'trees/tree/tree_1.png',
-        'trees/tree/tree_2.png',
-        'trees/tree/tree_3.png',
-        'objects/mushrooms/mushroom_purple.png',
-        'objects/mushrooms/mushroom_blue_hat.png',
-        'objects/mushrooms/mushroom_stringy.png',
-        'objects/mushrooms/mushroom_emerald.png',
+        Assets.images.explosion.keyName,
+        Assets.images.player.warrior1.idle.keyName,
+        Assets.images.player.warrior1.walk.keyName,
+        Assets.images.player.warrior1.attack1.keyName,
+        Assets.images.player.warrior1.attack2.keyName,
+        Assets.images.player.warrior1.attack3.keyName,
+        Assets.images.player.warrior1.hurt.keyName,
+        Assets.images.player.warrior1.dead.keyName,
+        Assets.images.player.warrior2.idle.keyName,
+        Assets.images.player.warrior2.walk.keyName,
+        Assets.images.player.warrior2.attack1.keyName,
+        Assets.images.player.warrior2.attack2.keyName,
+        Assets.images.player.warrior2.hurt.keyName,
+        Assets.images.player.warrior2.dead.keyName,
+        Assets.images.enemies.orcBerserk.idle.keyName,
+        Assets.images.enemies.orcBerserk.walk.keyName,
+        Assets.images.enemies.orcBerserk.attack1.keyName,
+        Assets.images.enemies.orcBerserk.dead.keyName,
+        Assets.images.enemies.orcBerserk.hurt.keyName,
+        Assets.images.enemies.orcShaman.idle.keyName,
+        Assets.images.enemies.orcShaman.walk.keyName,
+        Assets.images.enemies.orcShaman.attack1.keyName,
+        Assets.images.enemies.orcShaman.dead.keyName,
+        Assets.images.enemies.orcShaman.hurt.keyName,
+        Assets.images.enemies.orcWarrior.idle.keyName,
+        Assets.images.enemies.orcWarrior.walk.keyName,
+        Assets.images.enemies.orcWarrior.attack1.keyName,
+        Assets.images.enemies.orcWarrior.dead.keyName,
+        Assets.images.enemies.orcWarrior.hurt.keyName,
+        Assets.images.trees.tree.tree1.keyName,
+        Assets.images.trees.tree.tree2.keyName,
+        Assets.images.trees.tree.tree3.keyName,
+        Assets.images.objects.mushrooms.mushroomPurple.keyName,
+        Assets.images.objects.mushrooms.mushroomBlueHat.keyName,
+        Assets.images.objects.mushrooms.mushroomStringy.keyName,
+        Assets.images.objects.mushrooms.mushroomEmerald.keyName,
       ],
     );
   }

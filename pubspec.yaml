@@ -1,5 +1,5 @@
 name: flame_nano_rpg
-description: "A new Flutter project."
+description: "A simple Flame RPG game written in Dart"
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 0.0.3
 
@@ -13,6 +13,8 @@ dependencies:
 
   meta: any
 dev_dependencies:
+  build_runner: 2.4.13
+  flutter_gen_runner: 5.8.0
   very_good_analysis: ^6.0.0
 
 flutter:
@@ -25,3 +27,6 @@ flutter:
     - assets/images/enemies/orc_warrior/
     - assets/images/trees/tree/
     - assets/images/objects/mushrooms/
+flutter_gen:
+  integrations:
+    flutter_svg: true
