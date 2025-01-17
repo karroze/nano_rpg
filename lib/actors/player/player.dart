@@ -7,17 +7,27 @@ import 'package:flame/extensions.dart';
 import 'package:flame/rendering.dart';
 import 'package:flame_nano_rpg/actors/animators/npc_animator_callbacks.dart';
 import 'package:flame_nano_rpg/actors/animators/simple_character_animator.dart';
+import 'package:flame_nano_rpg/actors/contracts/attackable.dart';
 import 'package:flame_nano_rpg/actors/contracts/eatable.dart';
 import 'package:flame_nano_rpg/actors/contracts/healable.dart';
+import 'package:flame_nano_rpg/actors/contracts/healer.dart';
 import 'package:flame_nano_rpg/actors/contracts/interactable.dart';
+import 'package:flame_nano_rpg/actors/interactors/eat_interaction_handler/eat_interaction_handler.dart';
+import 'package:flame_nano_rpg/actors/interactors/eat_interaction_handler/eat_interaction_handler_callbacks.dart';
+import 'package:flame_nano_rpg/actors/interactors/heal_interaction_handler/heal_interaction_handler.dart';
+import 'package:flame_nano_rpg/actors/interactors/interaction_handler.dart';
+import 'package:flame_nano_rpg/actors/interactors/interaction_payload.dart';
+import 'package:flame_nano_rpg/actors/interactors/player_attack_interaction_handler/player_attack_interaction_handler.dart';
 import 'package:flame_nano_rpg/actors/npc/base_npc_component.dart';
-import 'package:flame_nano_rpg/actors/npc/enemies/simple_enemy_component.dart';
+import 'package:flame_nano_rpg/actors/npc/simple_npc_component.dart';
 import 'package:flame_nano_rpg/actors/player/player_animator.dart';
 import 'package:flame_nano_rpg/actors/player/player_state.dart';
 import 'package:flame_nano_rpg/objects/attack.dart';
+import 'package:flame_nano_rpg/objects/fraction.dart';
+import 'package:flame_nano_rpg/objects/healing.dart';
 import 'package:flutter/services.dart';
 
-final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, CollisionCallbacks, Healable {
+final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, CollisionCallbacks, Healable, Healer {
   Player({
     required super.position,
   }) : super(
@@ -66,6 +76,11 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
       ];
 
   @override
+  Healing produceHealing() => const Healing(
+        amount: 100,
+      );
+
+  @override
   double get damageCooldownTimeframeSeconds => 0;
 
   @override
@@ -74,17 +89,43 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
   @override
   int get visibilityDistance => 150;
 
-  final collisionDirection = Vector2.zero();
+  /// [Vector2] to store last collision direction.
+  late final collisionDirection = Vector2.zero();
+
+  /// Callbacks for [EatInteractionHandler].
+  late final eatInteractionHandlerCallbacks = EatInteractionHandlerCallbacks()..onEatableConsumed = _onEatableConsumed;
+
+  @override
+  FutureOr<SimpleCharacterAnimator<PlayerState>> provideAnimationGroupComponent() => PlayerAnimator(
+        position: size / 2,
+        size: size,
+        anchor: Anchor.center,
+      );
+
+  @override
+  @override
+  FutureOr<NpcAnimatorCallbacks?> provideAnimationCallbacks() => NpcAnimatorCallbacks()
+    ..onIdleStarted = onIdleStarted
+    ..onIdleEnded = onIdleStarted
+    ..onAttackStarted = onAttackStarted
+    ..onAttackEnded = onAttackEnded
+    ..onHurtStarted = onHurtStarted
+    ..onHurtEnded = onHurtEnded
+    ..onDieEnded = onDieEnded;
+
+  @override
+  Fraction get fraction => Fraction.friend;
+
+  @override
+  List<Interactable> filterTargets(List<Interactable> foundTargets) => foundTargets;
 
   @override
   void update(double dt) {
+    super.update(dt);
     // Handle movement if is alive
     if (isAlive) {
       _handleUpdateMovement(dt);
     }
-
-    super.update(dt);
-    // _disposeEnemyTargets();
   }
 
   @override
@@ -96,7 +137,7 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
 
     final handledMovement = _handleMovement(keysPressed);
     // final handledCollision = _handleCollisionDirection();
-    final handledAttacking = _handleAttacking(key);
+    final handledAttacking = _handleInteractionButtonPressed(key);
 
     final handled = handledMovement || handledAttacking;
 
@@ -104,27 +145,6 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
     if (!handled) return false;
 
     return true;
-  }
-
-  @override
-  FutureOr<SimpleCharacterAnimator<PlayerState>> provideAnimationGroupComponent() => PlayerAnimator(
-        position: size / 2,
-        size: size,
-        anchor: Anchor.center,
-      );
-
-  @override
-  FutureOr<NpcAnimatorCallbacks?> provideAnimationCallbacks() => NpcAnimatorCallbacks()
-    ..onAttackStarted = onAttackStarted
-    ..onAttackEnded = onAttackEnded
-    ..onHurtStarted = onHurtStarted
-    ..onHurtEnded = onHurtEnded
-    ..onDieEnded = onDieEnded;
-
-  @override
-  List<Interactable> filterTargets(List<Interactable> foundTargets) {
-    // return foundTargets.whereType<SimpleNpcComponent>().toList();
-    return foundTargets;
   }
 
   @override
@@ -170,82 +190,28 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
   }
 
   @override
-  bool interactWith(
-    Interactable object, {
-    required double distance,
+  InteractionHandler? provideInteraction(
+    Interactable other, {
+    required InteractionPayload payload,
   }) {
-    return switch (object) {
-      final SimpleNpcComponent enemy => handleEnemy(
-          enemy,
-          distance: distance,
+    return switch (other) {
+      final Healable attackable => HealInteractionHandler(
+        healer: this,
+        target: attackable,
+        payload: payload,
+      ),
+      final Attackable attackable => PlayerAttackInteractionHandler(
+          player: this,
+          target: attackable,
+          payload: payload,
         ),
-      final Eatable eatable => handleEatable(
-          eatable,
-          distance,
-        ),
-      _ => false,
+      final Eatable eatable => EatInteractionHandler(
+          eatable: eatable,
+          target: this,
+          payload: payload,
+        )..callbacks = eatInteractionHandlerCallbacks,
+      _ => null,
     };
-  }
-
-  @override
-  bool handleEnemy(
-    BaseNpcComponent<Object> target, {
-    required double distance,
-  }) {
-    // Get its position
-    if (distance <= attackDistance && canAttack && isAttacking && !isAttackingInProgress) {
-      attackTarget(
-        target: target,
-      );
-      return true;
-    }
-
-    return false;
-  }
-
-  /// Handles interaction with [eatable] at given [distance].
-  bool handleEatable(
-    Eatable eatable,
-    double distance,
-  ) {
-    // Check that within interaction distance
-    if (distance > eatable.interactionDistance) return false;
-
-    // Try to eat item
-    final wasEaten = eatable.eatBy(this);
-    // Apply effects if so
-    // TODO(georgii.savatkov): Maybe move to animation callbacks?
-    if (wasEaten) {
-      add(
-        ScaleEffect.by(
-          Vector2.all(1.2),
-          EffectController(
-            alternate: true,
-            duration: 0.125,
-            repeatCount: 2,
-          ),
-        ),
-      );
-    }
-
-    // Return whether interaction was made
-    return wasEaten;
-  }
-
-  @override
-  FutureOr<void> onDieEnded() async {
-    // Wait for some time
-    await Future<void>.delayed(
-      const Duration(
-        milliseconds: 1250,
-      ),
-    );
-    // Apply grayscale decorator
-    animator.decorator.addLast(
-      PaintDecorator.grayscale(
-        opacity: 0.5,
-      ),
-    );
   }
 
   /// Handles movement by processing keyboard [keysPressed]-s.
@@ -253,53 +219,45 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
   /// Returns true if movement was handled.
   bool _handleMovement(Set<LogicalKeyboardKey> keysPressed) {
     // Check for X movement
-    final diffX = switch (keysPressed) {
+    final velocityX = switch (keysPressed) {
       final Set<LogicalKeyboardKey> keys when keys.contains(LogicalKeyboardKey.keyA) || keys.contains(LogicalKeyboardKey.arrowLeft) => -1.0,
       final Set<LogicalKeyboardKey> keys when keys.contains(LogicalKeyboardKey.keyD) || keys.contains(LogicalKeyboardKey.arrowRight) => 1.0,
       _ => 0.0,
     };
 
     // Check for Y movement
-    final diffY = switch (keysPressed) {
+    final velocityY = switch (keysPressed) {
       final Set<LogicalKeyboardKey> keys when keys.contains(LogicalKeyboardKey.keyW) || keys.contains(LogicalKeyboardKey.arrowUp) => -1.0,
       final Set<LogicalKeyboardKey> keys when keys.contains(LogicalKeyboardKey.keyS) || keys.contains(LogicalKeyboardKey.arrowDown) => 1.0,
       _ => 0.0,
     };
 
     velocity.setValues(
-      diffX,
-      diffY,
+      velocityX,
+      velocityY,
     );
     return true;
   }
 
   /// Handles attacking
-  bool _handleAttacking(LogicalKeyboardKey key) {
-    // Set velocity to zero if there is a pending attack
-    if (isAttacking) {
-      velocity.setValues(0, 0);
-      return false;
-    }
-
+  bool _handleInteractionButtonPressed(LogicalKeyboardKey key) {
     // Check if attack button was pressed
-    isAttacking = key == LogicalKeyboardKey.keyE;
-    if (isAttacking) {
-      // If not, set attacking to false and do nothing
-      if (!hasStaminaForAttack) {
-        isAttacking = false;
-        isAttackingInProgress = false;
-        return false;
-      }
-
-      // Set movement to zero
-      velocity.setValues(0, 0);
-
-      // Manually decrease stamina even if no enemy targets were hit
-      decreaseStaminaPerHit();
-
-      return true;
+    final shouldAttack = key == LogicalKeyboardKey.keyE;
+    final shouldInteract = key == LogicalKeyboardKey.keyF;
+    // Set flags if attacking
+    if (shouldAttack) {
+      isAttacking = true;
+      isInteracting = true;
+    } else {
+      isInteracting = false;
     }
-    return false;
+    // Set flags if is interacting
+    if (shouldInteract) {
+      isInteracting = true;
+    } else {
+      isInteracting = false;
+    }
+    return shouldAttack || shouldInteract;
   }
 
   /// Updates player position with an update [dt] time.
@@ -325,5 +283,40 @@ final class Player extends BaseNpcComponent<PlayerState> with KeyboardHandler, C
     if (goesLeftLooksRight || goesRightLooksLeft) {
       animator.flipHorizontally();
     }
+  }
+
+  @override
+  FutureOr<void> onDieEnded() async {
+    // Wait for some time
+    await Future<void>.delayed(
+      const Duration(
+        milliseconds: 1250,
+      ),
+    );
+    // Apply grayscale decorator
+    animator.decorator.addLast(
+      PaintDecorator.grayscale(
+        opacity: 0.5,
+      ),
+    );
+  }
+
+  /// Handles successful eatable consumption.
+  FutureOr<void> _onEatableConsumed(Eatable eatable) async {
+    // Add scale effect to player's animator
+    await animator.add(
+      ScaleEffect.by(
+        Vector2.all(1.2),
+        EffectController(
+          alternate: true,
+          duration: 0.125,
+          repeatCount: 2,
+        ),
+      ),
+    );
+    // Remove eatable from the map
+    world.mapResolver.removeObjectFromMap(eatable);
+    // Remove eatable
+    eatable.removeFromParent();
   }
 }

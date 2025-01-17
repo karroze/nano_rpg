@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flame/components.dart';
 import 'package:flame_nano_rpg/actors/food/mushrooms/mushroom.dart';
+import 'package:flame_nano_rpg/gen/assets.gen.dart';
 
 final class MushroomBlueHat extends MushroomComponent {
   MushroomBlueHat({
@@ -14,5 +15,5 @@ final class MushroomBlueHat extends MushroomComponent {
   int get healingAmount => 20;
 
   @override
-  Image get image => game.images.fromCache('objects/mushrooms/mushroom_blue_hat.png');
+  Image get image => game.images.fromCache(Assets.images.objects.mushrooms.mushroomBlueHat.keyName);
 }

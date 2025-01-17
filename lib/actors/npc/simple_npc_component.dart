@@ -5,6 +5,10 @@ import 'package:flame/extensions.dart';
 import 'package:flame_nano_rpg/actors/animators/npc_animator_callbacks.dart';
 import 'package:flame_nano_rpg/actors/contracts/attackable.dart';
 import 'package:flame_nano_rpg/actors/contracts/interactable.dart';
+import 'package:flame_nano_rpg/actors/interactors/interaction_handler.dart';
+import 'package:flame_nano_rpg/actors/interactors/interaction_payload.dart';
+import 'package:flame_nano_rpg/actors/interactors/npc_to_npc_interaction_handler/npc_to_npc_interaction_handler.dart';
+import 'package:flame_nano_rpg/actors/interactors/npc_to_player_interaction_handler/npc_to_player_interaction_handler.dart';
 import 'package:flame_nano_rpg/actors/npc/base_npc_component.dart';
 import 'package:flame_nano_rpg/actors/npc/friendly/friendly_warrior/friendly_warrior_component.dart';
 import 'package:flame_nano_rpg/actors/npc/friendly/npc_state.dart';
@@ -16,17 +20,38 @@ abstract class SimpleNpcComponent extends BaseNpcComponent<NpcState> {
     required super.position,
     required super.size,
     required super.anchor,
-  }) : super(
-          priority: 3,
-        );
+    super.priority = 2,
+  }) : super();
 
   @override
   FutureOr<NpcAnimatorCallbacks?> provideAnimationCallbacks() => NpcAnimatorCallbacks()
+    ..onIdleStarted = onIdleStarted
+    ..onIdleEnded = onIdleStarted
     ..onAttackStarted = onAttackStarted
     ..onAttackEnded = onAttackEnded
     ..onHurtStarted = onHurtStarted
     ..onHurtEnded = onHurtEnded
     ..onDieEnded = onDieEnded;
+
+
+  @override
+  InteractionHandler? provideInteraction(
+    Interactable other, {
+    required InteractionPayload payload,
+  }) =>
+      switch (other) {
+        final Player player => NpcToPlayerInteractionHandler(
+            attacker: this,
+            player: player,
+            payload: payload,
+          ),
+        final SimpleNpcComponent npc => NpcToNpcInteractionHandler(
+            attacker: this,
+            target: npc,
+            payload: payload,
+          ),
+        _ => null,
+      };
 
   @override
   NpcState? provideStateUpdate(double dt) {
@@ -58,24 +83,6 @@ abstract class SimpleNpcComponent extends BaseNpcComponent<NpcState> {
     return switch (velocity.isZero()) {
       true => NpcState.idle,
       false => NpcState.walk,
-    };
-  }
-
-  @override
-  bool interactWith(
-    Interactable object, {
-    required double distance,
-  }) {
-    return switch (object) {
-      final Player player => handleEnemy(
-          player,
-          distance: distance,
-        ),
-      final FriendlyWarriorComponent friendlyWarrior => handleEnemy(
-          friendlyWarrior,
-          distance: distance,
-        ),
-      _ => false,
     };
   }
 

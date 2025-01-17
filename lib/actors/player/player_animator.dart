@@ -4,6 +4,7 @@ import 'package:flame/components.dart';
 import 'package:flame/sprite.dart';
 import 'package:flame_nano_rpg/actors/animators/simple_character_animator.dart';
 import 'package:flame_nano_rpg/actors/player/player_state.dart';
+import 'package:flame_nano_rpg/gen/assets.gen.dart';
 
 final class PlayerAnimator extends SimpleCharacterAnimator<PlayerState> {
   PlayerAnimator({
@@ -13,7 +14,7 @@ final class PlayerAnimator extends SimpleCharacterAnimator<PlayerState> {
   });
 
   late final idleAnimation = SpriteAnimation.fromFrameData(
-    game.images.fromCache('player/warrior_1/idle.png'),
+    game.images.fromCache(Assets.images.player.warrior1.idle.keyName),
     SpriteAnimationData.sequenced(
       amount: 6,
       stepTime: .2,
@@ -22,7 +23,7 @@ final class PlayerAnimator extends SimpleCharacterAnimator<PlayerState> {
   );
 
   late final walkAnimation = SpriteAnimation.fromFrameData(
-    game.images.fromCache('player/warrior_1/walk.png'),
+    game.images.fromCache(Assets.images.player.warrior1.walk.keyName),
     SpriteAnimationData.sequenced(
       amount: 8,
       stepTime: .2,
@@ -31,7 +32,7 @@ final class PlayerAnimator extends SimpleCharacterAnimator<PlayerState> {
   );
 
   late final attackAnimation1 = SpriteAnimation.fromFrameData(
-    game.images.fromCache('player/warrior_1/attack_1.png'),
+    game.images.fromCache(Assets.images.player.warrior1.attack1.keyName),
     SpriteAnimationData.sequenced(
       amount: 4,
       stepTime: .2,
@@ -41,7 +42,7 @@ final class PlayerAnimator extends SimpleCharacterAnimator<PlayerState> {
   );
 
   late final attackAnimation2 = SpriteAnimation.fromFrameData(
-    game.images.fromCache('player/warrior_1/attack_2.png'),
+    game.images.fromCache(Assets.images.player.warrior1.attack2.keyName),
     SpriteAnimationData.sequenced(
       amount: 4,
       stepTime: .2,
@@ -51,7 +52,7 @@ final class PlayerAnimator extends SimpleCharacterAnimator<PlayerState> {
   );
 
   late final attackAnimation3 = SpriteAnimation.fromFrameData(
-    game.images.fromCache('player/warrior_1/attack_3.png'),
+    game.images.fromCache(Assets.images.player.warrior1.attack3.keyName),
     SpriteAnimationData.sequenced(
       amount: 4,
       stepTime: .2,
@@ -61,7 +62,7 @@ final class PlayerAnimator extends SimpleCharacterAnimator<PlayerState> {
   );
 
   late final hurtAnimation = SpriteAnimation.fromFrameData(
-    game.images.fromCache('player/warrior_1/hurt.png'),
+    game.images.fromCache(Assets.images.player.warrior1.hurt.keyName),
     SpriteAnimationData.sequenced(
       amount: 2,
       stepTime: .2,
@@ -71,7 +72,7 @@ final class PlayerAnimator extends SimpleCharacterAnimator<PlayerState> {
   );
 
   late final dieAnimation = SpriteAnimation.fromFrameData(
-    game.images.fromCache('player/warrior_1/dead.png'),
+    game.images.fromCache(Assets.images.player.warrior1.dead.keyName),
     SpriteAnimationData.sequenced(
       amount: 4,
       stepTime: .2,

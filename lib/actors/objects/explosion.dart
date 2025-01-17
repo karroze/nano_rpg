@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flame/components.dart';
+import 'package:flame_nano_rpg/gen/assets.gen.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 
 final class Explosion extends SpriteAnimationComponent with HasGameRef<NanoRpgGame> {
@@ -15,7 +16,7 @@ final class Explosion extends SpriteAnimationComponent with HasGameRef<NanoRpgGa
   @override
   FutureOr<void> onLoad() {
     animation = SpriteAnimation.fromFrameData(
-      game.images.fromCache('explosion.png'),
+      game.images.fromCache(Assets.images.explosion.keyName),
       SpriteAnimationData.sequenced(
         amount: 6,
         stepTime: .1,

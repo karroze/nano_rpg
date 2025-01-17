@@ -3,9 +3,10 @@ import 'dart:async';
 import 'package:flame/components.dart';
 import 'package:flame_nano_rpg/actors/animators/simple_character_animator.dart';
 import 'package:flame_nano_rpg/actors/npc/enemies/orc_shaman/enemy_orc_shaman_animator.dart';
-import 'package:flame_nano_rpg/actors/npc/enemies/simple_enemy_component.dart';
+import 'package:flame_nano_rpg/actors/npc/simple_npc_component.dart';
 import 'package:flame_nano_rpg/actors/npc/friendly/npc_state.dart';
 import 'package:flame_nano_rpg/objects/attack.dart';
+import 'package:flame_nano_rpg/objects/fraction.dart';
 
 final class EnemyOrcShamanComponent extends SimpleNpcComponent {
   EnemyOrcShamanComponent({
@@ -54,6 +55,9 @@ final class EnemyOrcShamanComponent extends SimpleNpcComponent {
 
   @override
   Vector2 get hitboxSize => Vector2(68, 64);
+
+  @override
+  Fraction get fraction => Fraction.enemy;
 
   @override
   List<Attack> get availableAttacks => [

@@ -99,7 +99,10 @@ abstract class MapResolver extends Component {
     // Remove object from map
     removeObjectFromMap(object);
     // Set new position for object
-    map[newPosition.x][newPosition.y] = List.of(map[newPosition.x][newPosition.y])..add(object);
+    try {
+      map[newPosition.x][newPosition.y] = List.of(map[newPosition.x][newPosition.y])..add(object);
+    }
+    catch(_) {}
   }
 
   /// Method to removed [object] from map.

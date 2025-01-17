@@ -15,6 +15,7 @@ import 'package:flame_nano_rpg/actors/contracts/interactable.dart';
 import 'package:flame_nano_rpg/actors/contracts/interacting.dart';
 import 'package:flame_nano_rpg/actors/contracts/living.dart';
 import 'package:flame_nano_rpg/actors/contracts/moving.dart';
+import 'package:flame_nano_rpg/actors/interactors/interaction_payload.dart';
 import 'package:flame_nano_rpg/nano_rpg_game.dart';
 import 'package:flame_nano_rpg/overlays/progress_bars/health_bar.dart';
 import 'package:flame_nano_rpg/worlds/main_world.dart';
@@ -153,7 +154,6 @@ abstract class BaseNpcComponent<State> extends PositionComponent
     );
   }
 
-  @override
   void handleInteractions(List<Interactable> targets) {
     // Do nothing if there are no targets
     if (availableTargets.isEmpty) return;
@@ -163,16 +163,19 @@ abstract class BaseNpcComponent<State> extends PositionComponent
       // Switch target type
       final targetPosition = currentTarget.position;
       // Calculate interaction offset based on size
-      final distanceOffsetX = currentTarget.position.x > position.x ? size.x / 4: currentTarget.size.x / 4;
-      final distanceOffsetY = currentTarget.position.y > position.y ? size.y / 4: currentTarget.size.y / 4;
+      final distanceOffsetX = currentTarget.position.x > position.x ? size.x / 4 : currentTarget.size.x / 4;
+      final distanceOffsetY = currentTarget.position.y > position.y ? size.y / 4 : currentTarget.size.y / 4;
 
       // Find distance
       final distanceToTarget = (targetPosition - position).length - Vector2(distanceOffsetX, distanceOffsetY).length;
       // Interact with target
-      final hasInteraction = interactWith(
-        currentTarget,
-        distance: distanceToTarget,
-      );
+      final hasInteraction = provideInteraction(
+            currentTarget,
+            payload: InteractionPayload(
+              distance: distanceToTarget,
+            ),
+          )?.performInteraction() ??
+          false;
 
       // Return from iteration over enemies if interaction happened
       if (hasInteraction) return;
@@ -248,6 +251,7 @@ abstract class BaseNpcComponent<State> extends PositionComponent
   /// Animation callback when idle animation has started.
   FutureOr<void> onIdleStarted() {
     isAttacked = false;
+    isAttackingInProgress = false;
   }
 
   /// Animation callback when idle animation has ended.

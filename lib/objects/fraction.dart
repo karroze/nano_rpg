@@ -1,0 +1,4 @@
+enum Fraction {
+  friend,
+  enemy;
+}

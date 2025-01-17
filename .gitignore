@@ -108,9 +108,8 @@ app.*.symbols
 # Obfuscation related
 app.*.map.json
 
-#Freezed
-*.g.dart
-*.freezed.dart
+# Assets generation
+lib/gen
 
 # Exceptions to the above rules.
 !**/ios/**/default.mode1v3
