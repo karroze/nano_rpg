@@ -21,8 +21,10 @@ final class PlayerAttackInteractionHandler extends InteractionHandler {
     if (player.fraction == target.fraction) return false;
     // Check that attack can be performed
     final canAttack = payload.distance <= player.attackDistance && player.hasStaminaForAttack && player.canAttack;
+    // Check that attack should be performed
+    final shouldAttack = canAttack && player.isAttacking && !player.isAttackingInProgress;
     // Attack target if possible
-    if (canAttack && player.isAttacking && !player.isAttackingInProgress) {
+    if (shouldAttack) {
       // Set player velocity to zero
       player.velocity.setValues(
         0,
@@ -35,6 +37,6 @@ final class PlayerAttackInteractionHandler extends InteractionHandler {
     }
 
     // Return interaction result
-    return canAttack;
+    return shouldAttack;
   }
 }

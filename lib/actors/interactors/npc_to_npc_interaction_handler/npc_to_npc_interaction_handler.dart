@@ -20,10 +20,9 @@ final class NpcToNpcInteractionHandler extends InteractionHandler {
     final targetPosition = target.position;
 
     // Look at enemy if within visibility range but not within move range
-    final playerWithinVisibilityRange = payload.distance > attacker.moveDistance && payload.distance <= attacker.visibilityDistance;
-    if (playerWithinVisibilityRange) {
+    final targetWithinVisibilityRange = payload.distance > attacker.moveDistance && payload.distance <= attacker.visibilityDistance;
+    if (targetWithinVisibilityRange) {
       attacker.lookAtTarget(targetPosition);
-      return false;
     }
 
     // Don't attack same fraction

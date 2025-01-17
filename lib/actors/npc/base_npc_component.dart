@@ -213,41 +213,6 @@ abstract class BaseNpcComponent<State> extends PositionComponent
     availableTargets = filterTargets(foundTargets);
   }
 
-  /// Handles interaction with a [target].
-  ///
-  /// [distance] can be used to determine what type of interaction to perform.
-  bool handleEnemy(
-    BaseNpcComponent<Object> target, {
-    required double distance,
-  }) {
-    // Get target position
-    final targetPosition = target.position;
-
-    // Look at enemy if within visibility range but not within move range
-    if (distance > moveDistance && distance <= visibilityDistance) {
-      lookAtTarget(targetPosition);
-      return false;
-    }
-    // Set walk target to the enemy if within move range but not within attack range
-    else if (distance <= moveDistance && distance > attackDistance) {
-      setWalkTarget(
-        target.position,
-        endDistance: attackDistance,
-      );
-      return true;
-    }
-    // Attack enemy if within attack range and can attack
-    else if (distance <= attackDistance && canAttack) {
-      attackTarget(
-        target: target,
-      );
-      return true;
-    }
-
-    // Return false if nothing happened
-    return false;
-  }
-
   /// Animation callback when idle animation has started.
   FutureOr<void> onIdleStarted() {
     isAttacked = false;

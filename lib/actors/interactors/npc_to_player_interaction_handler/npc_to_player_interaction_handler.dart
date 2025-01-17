@@ -39,14 +39,6 @@ final class NpcToPlayerInteractionHandler extends InteractionHandler {
       );
       return true;
     }
-    // Attack enemy if within attack range and can attack
-    final playerWithinAttackRange = payload.distance <= attacker.attackDistance && attacker.canAttack && attacker.hasStaminaForAttack;
-    if (playerWithinAttackRange && !sameFraction) {
-      attacker.attackTarget(
-        target: player,
-      );
-      return true;
-    }
 
     return false;
   }
